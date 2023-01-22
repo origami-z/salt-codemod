@@ -9,7 +9,11 @@
   },
   "author": "Zhihao CUi",
   "license": "ISC",
+  "engines": {
+    "node": ">=16"
+  },
   "dependencies": {
+    "fast-glob": "^3.2.12",
     "ts-morph": "^17.0.1",
     "yargs": "^17.6.2"
   }
