@@ -368,7 +368,7 @@ if (mode === undefined || mode === "css") {
       })
       .join("\n");
 
-    if (newContent !== originalContent) {
+    if (newContent !== originalContent && !dryRun) {
       writeFileSync(filePath, newContent, { encoding: "utf-8" });
       verboseOnlyLog("Writing new", filePath);
     }
