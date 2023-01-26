@@ -111,21 +111,31 @@ if (mode === undefined || mode === "ts") {
     // Components / Types moved from core to lab
     [
       "Card",
+      "CardProps",
       "Panel",
+      "PanelProps",
       // Layouts
       "DeckLayout",
+      "DeckLayoutProps",
       "SplitLayout",
+      "SplitLayoutProps",
       "LayerLayout",
+      "LayerLayoutProps",
       "ParentChildLayout",
+      "ParentChildLayoutProps",
       // Tooltip
       "Tooltip",
       "TooltipProps",
       "useTooltip",
       // Forms
       "FormField",
+      "FormFieldProps",
       "Switch",
+      "SwitchProps",
       "Input",
+      "InputProps",
       "Checkbox",
+      "CheckboxProps",
     ].forEach((c) =>
       moveNamedImports(file, {
         namedImportText: c,
@@ -135,12 +145,13 @@ if (mode === undefined || mode === "ts") {
     );
 
     // Components / Types moved from lab to core
-    ["Link", "Text", "TextProps", "H1", "H2", "H3", "H4"].forEach((c) =>
-      moveNamedImports(file, {
-        namedImportText: c,
-        from: "@salt-ds/lab",
-        to: "@salt-ds/core",
-      })
+    ["Link", "LinkProps", "Text", "TextProps", "H1", "H2", "H3", "H4"].forEach(
+      (c) =>
+        moveNamedImports(file, {
+          namedImportText: c,
+          from: "@salt-ds/lab",
+          to: "@salt-ds/core",
+        })
     );
 
     // Component props
