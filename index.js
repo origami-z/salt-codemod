@@ -5,10 +5,21 @@ import glob from "fast-glob";
 import { join } from "path";
 import process from "process";
 import { readFileSync, writeFileSync } from "fs";
+import { parse, lte, lt, gt, gte, SemVer } from "semver";
 
 const yargs = _yargs(hideBin(process.argv));
+const latestSupportedVersion = "1.1.0";
 
-var { tsconfig, verbose, organizeImports, dryRun, only, mode } = await yargs
+var {
+  tsconfig,
+  verbose,
+  organizeImports,
+  dryRun,
+  only,
+  mode,
+  from: fromInput,
+  to: toInput,
+} = await yargs
   .scriptName("salt-ts-morph")
   .usage("$0 <cmd> [args]")
   .option("tsconfig", {
@@ -41,7 +52,28 @@ var { tsconfig, verbose, organizeImports, dryRun, only, mode } = await yargs
     type: "string",
     description: `Use this to operate only one sub-section of the codemod needed. i.e. "ts", "css". `,
   })
+  .option("from", {
+    type: "string",
+    description: `Semver of salt-ds you're currently on`,
+  })
+  .option("to", {
+    type: "string",
+    description: `Semver of salt-ds you're migrating to. Latest supported is ${latestSupportedVersion}`,
+  })
   .help().argv;
+
+const fromVersion = parse(fromInput) || parse("0.0.0");
+const toVersion = parse(toInput) || parse(latestSupportedVersion);
+
+console.log(
+  "Running codemod from version",
+  fromVersion.format(),
+  "to version",
+  toVersion.format()
+);
+
+const v100 = parse("1.0.0");
+const v110 = parse("1.1.0");
 
 // <-------- TS Code ---------->
 
@@ -73,148 +105,13 @@ if (mode === undefined || mode === "ts") {
 
     let saltProviderRenamed = false;
 
-    // Imports
-    for (const declaration of file.getImportDeclarations()) {
-      // Rename import declaration first
-      renameImportModuleSpecifier(declaration, {
-        from: "@jpmorganchase/uitk-theme",
-        to: "@salt-ds/theme",
-        partial: true,
-      });
-      renameImportModuleSpecifier(declaration, {
-        from: "@jpmorganchase/uitk-core",
-        to: "@salt-ds/core",
-      });
-      renameImportModuleSpecifier(declaration, {
-        from: "@jpmorganchase/uitk-lab",
-        to: "@salt-ds/lab",
-      });
-      renameImportModuleSpecifier(declaration, {
-        from: "@jpmorganchase/uitk-icons",
-        to: "@salt-ds/icons",
-      });
-      renameImportModuleSpecifier(declaration, {
-        from: "@jpmorganchase/uitk-grid",
-        to: "@salt-ds/data-grid",
-      });
-
-      // Rename named imports with new declaration
-      saltProviderRenamed =
-        saltProviderRenamed ||
-        renameNamedImports(declaration, {
-          moduleSpecifier: "@salt-ds/core",
-          from: "ToolkitProvider",
-          to: "SaltProvider",
-        });
+    if (gt(v100, fromVersion) && lte(v100, toVersion)) {
+      saltProviderRenamed = react100(file, saltProviderRenamed);
     }
 
-    // Components / Types moved from core to lab
-    [
-      "Card",
-      "CardProps",
-      "Panel",
-      "PanelProps",
-      // Layouts
-      "DeckLayout",
-      "DeckLayoutProps",
-      "SplitLayout",
-      "SplitLayoutProps",
-      "LayerLayout",
-      "LayerLayoutProps",
-      "ParentChildLayout",
-      "ParentChildLayoutProps",
-      // Tooltip
-      "Tooltip",
-      "TooltipProps",
-      "useTooltip",
-      // Forms
-      "FormField",
-      "FormFieldProps",
-      "Switch",
-      "SwitchProps",
-      "Input",
-      "InputProps",
-      "Checkbox",
-      "CheckboxProps",
-    ].forEach((c) =>
-      moveNamedImports(file, {
-        namedImportText: c,
-        from: "@salt-ds/core",
-        to: "@salt-ds/lab",
-      })
-    );
-
-    // Components / Types moved from lab to core
-    ["Link", "LinkProps", "Text", "TextProps", "H1", "H2", "H3", "H4"].forEach(
-      (c) =>
-        moveNamedImports(file, {
-          namedImportText: c,
-          from: "@salt-ds/lab",
-          to: "@salt-ds/core",
-        })
-    );
-
-    // Component props
-    if (saltProviderRenamed) {
-      renameReactElementName(file, {
-        from: "ToolkitProvider",
-        to: "SaltProvider",
-      });
+    if (gt(v110, fromVersion) && lte(v110, toVersion)) {
+      react110(file);
     }
-
-    // <Panel emphasis="medium"> => <Panel variant="primary">
-    // <Panel emphasis="high"> => <Panel variant="secondary">
-    replaceReactAttribute(file, {
-      elementName: "Panel",
-      attributeFrom: "emphasis",
-      valueFrom: `"medium"`,
-      attributeTo: "variant",
-      valueTo: `"primary"`,
-    });
-    replaceReactAttribute(file, {
-      elementName: "Panel",
-      attributeFrom: "emphasis",
-      valueFrom: `"high"`,
-      attributeTo: "variant",
-      valueTo: `"secondary"`,
-    });
-
-    // BorderItem position rename
-    replaceReactAttribute(file, {
-      elementName: "BorderItem",
-      attributeFrom: "position",
-      valueFrom: `"header"`,
-      attributeTo: "position",
-      valueTo: `"north"`,
-    });
-    replaceReactAttribute(file, {
-      elementName: "BorderItem",
-      attributeFrom: "position",
-      valueFrom: `"main"`,
-      attributeTo: "position",
-      valueTo: `"center"`,
-    });
-    replaceReactAttribute(file, {
-      elementName: "BorderItem",
-      attributeFrom: "position",
-      valueFrom: `"footer"`,
-      attributeTo: "position",
-      valueTo: `"south"`,
-    });
-    replaceReactAttribute(file, {
-      elementName: "BorderItem",
-      attributeFrom: "position",
-      valueFrom: `"left"`,
-      attributeTo: "position",
-      valueTo: `"west"`,
-    });
-    replaceReactAttribute(file, {
-      elementName: "BorderItem",
-      attributeFrom: "position",
-      valueFrom: `"right"`,
-      attributeTo: "position",
-      valueTo: `"east"`,
-    });
 
     if (organizeImports) {
       file.organizeImports();
@@ -260,7 +157,7 @@ if (mode === undefined || mode === "css") {
   );
 
   // Everything here is salt prefixed, assuming uitk prefix rename is performed first
-  const knownCssRenamesMap = new Map([
+  const knownCss100RenamesMap = new Map([
     ["--salt-container-background", "--salt-container-primary-background"],
     [
       "--salt-container-background-medium",
@@ -338,8 +235,8 @@ if (mode === undefined || mode === "css") {
     ["--salt-zIndex-tooltip", "--salt-zIndex-flyover"],
   ]);
 
-  const knownCssRenameCheckRegex = new RegExp(
-    Array.from(knownCssRenamesMap.keys()).join("|"),
+  const knownCss100RenameCheckRegex = new RegExp(
+    Array.from(knownCss100RenamesMap.keys()).join("|"),
     "g"
   );
 
@@ -360,22 +257,24 @@ if (mode === undefined || mode === "css") {
     const newContent = originalContent
       .split(/\r?\n|\r|\n/g)
       .map((line, lineIndex) => {
-        const saltPrefixed = line.replace(/--uitk/g, "--salt");
+        let newLine = line;
 
-        const knownVarMigrated = migrateCssVar(
-          saltPrefixed,
-          knownCssRenameCheckRegex,
-          knownCssRenamesMap
-        );
+        if (gt(v100, fromVersion) && lte(v100, toVersion)) {
+          newLine = css100(
+            newLine,
+            knownCss100RenameCheckRegex,
+            knownCss100RenamesMap
+          );
+        }
 
         warnUnknownSaltThemeVars(
           allSaltThemeCssVars,
-          knownVarMigrated,
+          newLine,
           lineIndex,
           filePath
         );
 
-        return knownVarMigrated;
+        return newLine;
       })
       .join("\n");
 
@@ -389,6 +288,175 @@ if (mode === undefined || mode === "css") {
 }
 
 console.log("All done!");
+
+function css100(line, knownCss100RenameCheckRegex, knownCss100RenamesMap) {
+  const saltPrefixed = line.replace(/--uitk/g, "--salt");
+
+  const knownVarMigrated = migrateCssVar(
+    saltPrefixed,
+    knownCss100RenameCheckRegex,
+    knownCss100RenamesMap
+  );
+  return knownVarMigrated;
+}
+
+function react100(file, saltProviderRenamed) {
+  // Imports
+  for (const declaration of file.getImportDeclarations()) {
+    // Rename import declaration first
+    renameImportModuleSpecifier(declaration, {
+      from: "@jpmorganchase/uitk-theme",
+      to: "@salt-ds/theme",
+      partial: true,
+    });
+    renameImportModuleSpecifier(declaration, {
+      from: "@jpmorganchase/uitk-core",
+      to: "@salt-ds/core",
+    });
+    renameImportModuleSpecifier(declaration, {
+      from: "@jpmorganchase/uitk-lab",
+      to: "@salt-ds/lab",
+    });
+    renameImportModuleSpecifier(declaration, {
+      from: "@jpmorganchase/uitk-icons",
+      to: "@salt-ds/icons",
+    });
+    renameImportModuleSpecifier(declaration, {
+      from: "@jpmorganchase/uitk-grid",
+      to: "@salt-ds/data-grid",
+    });
+
+    // Rename named imports with new declaration
+    saltProviderRenamed =
+      saltProviderRenamed ||
+      renameNamedImports(declaration, {
+        moduleSpecifier: "@salt-ds/core",
+        from: "ToolkitProvider",
+        to: "SaltProvider",
+      });
+  }
+
+  // Components / Types moved from core to lab
+  [
+    "Card",
+    "CardProps",
+    "Panel",
+    "PanelProps",
+    // Layouts
+    "DeckLayout",
+    "DeckLayoutProps",
+    "SplitLayout",
+    "SplitLayoutProps",
+    "LayerLayout",
+    "LayerLayoutProps",
+    "ParentChildLayout",
+    "ParentChildLayoutProps",
+    // Tooltip
+    "Tooltip",
+    "TooltipProps",
+    "useTooltip",
+    // Forms
+    "FormField",
+    "FormFieldProps",
+    "Switch",
+    "SwitchProps",
+    "Input",
+    "InputProps",
+    "Checkbox",
+    "CheckboxProps",
+  ].forEach((c) =>
+    moveNamedImports(file, {
+      namedImportText: c,
+      from: "@salt-ds/core",
+      to: "@salt-ds/lab",
+    })
+  );
+
+  // Components / Types moved from lab to core
+  ["Link", "LinkProps", "Text", "TextProps", "H1", "H2", "H3", "H4"].forEach(
+    (c) =>
+      moveNamedImports(file, {
+        namedImportText: c,
+        from: "@salt-ds/lab",
+        to: "@salt-ds/core",
+      })
+  );
+
+  // Component props
+  if (saltProviderRenamed) {
+    renameReactElementName(file, {
+      from: "ToolkitProvider",
+      to: "SaltProvider",
+    });
+  }
+
+  // <Panel emphasis="medium"> => <Panel variant="primary">
+  // <Panel emphasis="high"> => <Panel variant="secondary">
+  replaceReactAttribute(file, {
+    elementName: "Panel",
+    attributeFrom: "emphasis",
+    valueFrom: `"medium"`,
+    attributeTo: "variant",
+    valueTo: `"primary"`,
+  });
+  replaceReactAttribute(file, {
+    elementName: "Panel",
+    attributeFrom: "emphasis",
+    valueFrom: `"high"`,
+    attributeTo: "variant",
+    valueTo: `"secondary"`,
+  });
+
+  // BorderItem position rename
+  replaceReactAttribute(file, {
+    elementName: "BorderItem",
+    attributeFrom: "position",
+    valueFrom: `"header"`,
+    attributeTo: "position",
+    valueTo: `"north"`,
+  });
+  replaceReactAttribute(file, {
+    elementName: "BorderItem",
+    attributeFrom: "position",
+    valueFrom: `"main"`,
+    attributeTo: "position",
+    valueTo: `"center"`,
+  });
+  replaceReactAttribute(file, {
+    elementName: "BorderItem",
+    attributeFrom: "position",
+    valueFrom: `"footer"`,
+    attributeTo: "position",
+    valueTo: `"south"`,
+  });
+  replaceReactAttribute(file, {
+    elementName: "BorderItem",
+    attributeFrom: "position",
+    valueFrom: `"left"`,
+    attributeTo: "position",
+    valueTo: `"west"`,
+  });
+  replaceReactAttribute(file, {
+    elementName: "BorderItem",
+    attributeFrom: "position",
+    valueFrom: `"right"`,
+    attributeTo: "position",
+    valueTo: `"east"`,
+  });
+  return saltProviderRenamed;
+}
+
+// Release note: https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Fcore%401.1.0
+function react110(file) {
+  // Components / Types moved from lab to core
+  ["Card", "CardProps", "Panel", "PanelProps"].forEach((c) =>
+    moveNamedImports(file, {
+      namedImportText: c,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    })
+  );
+}
 
 /**
  *
