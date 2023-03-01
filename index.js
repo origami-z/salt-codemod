@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync } from "fs";
 import { parse, lte, lt, gt, gte, SemVer } from "semver";
 
 const yargs = _yargs(hideBin(process.argv));
-const latestSupportedVersion = "1.1.0";
+const latestSupportedVersion = "1.2.0";
 
 var {
   tsconfig,
@@ -74,6 +74,7 @@ console.log(
 
 const v100 = parse("1.0.0");
 const v110 = parse("1.1.0");
+const v120 = parse("1.2.0");
 
 // <-------- TS Code ---------->
 
@@ -111,6 +112,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v110, fromVersion) && lte(v110, toVersion)) {
       react110(file);
+    }
+
+    if (gt(v120, fromVersion) && lte(v120, toVersion)) {
+      react120(file);
     }
 
     if (organizeImports) {
@@ -450,6 +455,24 @@ function react100(file, saltProviderRenamed) {
 function react110(file) {
   // Components / Types moved from lab to core
   ["Card", "CardProps", "Panel", "PanelProps"].forEach((c) =>
+    moveNamedImports(file, {
+      namedImportText: c,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    })
+  );
+}
+
+function react120(file) {
+  // Components / Types moved from lab to core
+  [
+    "Tooltip",
+    "TooltipProps",
+    "useFloatingUI",
+    "Spinner",
+    "SplitLayout",
+    "SplitLayoutProps",
+  ].forEach((c) =>
     moveNamedImports(file, {
       namedImportText: c,
       from: "@salt-ds/lab",
