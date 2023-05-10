@@ -166,3 +166,39 @@ export const css140RenameMap = [
   // - --salt-palette-interact-foreground-partial
   // - --salt-palette-interact-foreground-partialDisabled
 ];
+
+export const css160RenameMap = [
+  // Deprecated -emphasize tokens in status and palette; replaced with default tokens
+  [
+    "--salt-status-error-background-emphasize",
+    "--salt-status-error-background",
+  ],
+  ["--salt-status-info-background-emphasize", "--salt-status-info-background"],
+  [
+    "--salt-status-success-background-emphasize",
+    "--salt-status-success-background",
+  ],
+  [
+    "--salt-status-warning-background-emphasize",
+    "--salt-status-warning-background",
+  ],
+  [
+    "--salt-palette-error-background-emphasize",
+    "--salt-palette-error-background",
+  ],
+  [
+    "--salt-palette-info-background-emphasize",
+    "--salt-palette-info-background",
+  ],
+  [
+    "--salt-palette-success-background-emphasize",
+    "--salt-palette-success-background",
+  ],
+  [
+    "--salt-palette-warning-background-emphasize",
+    "--salt-palette-warning-background",
+  ],
+
+  // Deprecated --salt-size-icon-base, replaced with --salt-icon-size-base
+  ["--salt-size-icon-base", "--salt-icon-size-base"],
+];
