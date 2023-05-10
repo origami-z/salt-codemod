@@ -72,9 +72,94 @@ console.log(
   toVersion.format()
 );
 
+// Everything here is salt prefixed, assuming uitk prefix rename is performed first
+const css100RenameMap = [
+  ["--salt-container-background", "--salt-container-primary-background"],
+  [
+    "--salt-container-background-medium",
+    "--salt-container-secondary-background",
+  ],
+  ["--salt-container-background-low", "--salt-container-tertiary-background"],
+
+  ["--salt-editable-background", "--salt-editable-primary-background"],
+  ["--salt-editable-background-low", "--salt-editable-primary-background"],
+  ["--salt-editable-background-medium", "--salt-editable-secondary-background"],
+  ["--salt-editable-background-high", "--salt-editable-tertiary-background"],
+  ["--salt-editable-text-color", "--salt-text-primary-foreground"],
+
+  [
+    "--salt-selectable-background-selected",
+    "--salt-selectable-cta-background-selected",
+  ],
+  [
+    "--salt-selectable-foreground-selected",
+    "--salt-selectable-cta-foreground-selected",
+  ],
+
+  ["--salt-separable-border-color-1", "--salt-separable-tertiary-borderColor"],
+
+  [
+    "--salt-status-info-background-high",
+    "--salt-status-info-background-emphasize",
+  ],
+  [
+    "--salt-status-success-background-high",
+    "--salt-status-success-background-emphasize",
+  ],
+  [
+    "--salt-status-warning-background-high",
+    "--salt-status-warning-background-emphasize",
+  ],
+  [
+    "--salt-status-error-background-high",
+    "--salt-status-error-background-emphasize",
+  ],
+
+  ["--salt-text-primary-color", "--salt-text-primary-foreground"],
+  ["--salt-text-secondary-color", "--salt-text-secondary-foreground"],
+
+  ["--salt-spacing-unit", "--salt-size-unit"],
+
+  ["--salt-color-grey-10", "--salt-color-gray-10"],
+  ["--salt-color-grey-20", "--salt-color-gray-20"],
+  ["--salt-color-grey-30", "--salt-color-gray-30"],
+  ["--salt-color-grey-40", "--salt-color-gray-40"],
+  ["--salt-color-grey-50", "--salt-color-gray-50"],
+  ["--salt-color-grey-60", "--salt-color-gray-60"],
+  ["--salt-color-grey-70", "--salt-color-gray-70"],
+  ["--salt-color-grey-80", "--salt-color-gray-80"],
+  ["--salt-color-grey-90", "--salt-color-gray-90"],
+  ["--salt-color-grey-100", "--salt-color-gray-100"],
+  ["--salt-color-grey-200", "--salt-color-gray-200"],
+  ["--salt-color-grey-300", "--salt-color-gray-300"],
+  ["--salt-color-grey-400", "--salt-color-gray-400"],
+  ["--salt-color-grey-500", "--salt-color-gray-500"],
+  ["--salt-color-grey-600", "--salt-color-gray-600"],
+  ["--salt-color-grey-700", "--salt-color-gray-700"],
+  ["--salt-color-grey-800", "--salt-color-gray-800"],
+  ["--salt-color-grey-900", "--salt-color-gray-900"],
+
+  ["--salt-zIndex-appheader", "--salt-zIndex-appHeader"],
+  ["--salt-zIndex-dragobject", "--salt-zIndex-dragObject"],
+  ["--salt-zIndex-contextmenu", "--salt-zIndex-contextMenu"],
+  ["--salt-zIndex-tooltip", "--salt-zIndex-flyover"],
+];
+
+const css130RenameMap = [
+  [
+    "--salt-differential-positive-foreground",
+    "--salt-status-positive-foreground",
+  ],
+  [
+    "--salt-differential-negative-foreground",
+    "--salt-status-negative-foreground",
+  ],
+];
+
 const v100 = parse("1.0.0");
 const v110 = parse("1.1.0");
 const v120 = parse("1.2.0");
+const v130 = parse("1.3.0");
 
 // <-------- TS Code ---------->
 
@@ -116,6 +201,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v120, fromVersion) && lte(v120, toVersion)) {
       react120(file);
+    }
+
+    if (gt(v130, fromVersion) && lte(v130, toVersion)) {
+      react130(file);
     }
 
     if (organizeImports) {
@@ -161,95 +250,29 @@ if (mode === undefined || mode === "css") {
     allSaltThemeCssVars.size
   );
 
-  // Everything here is salt prefixed, assuming uitk prefix rename is performed first
-  const knownCss100RenamesMap = new Map([
-    ["--salt-container-background", "--salt-container-primary-background"],
-    [
-      "--salt-container-background-medium",
-      "--salt-container-secondary-background",
-    ],
-    ["--salt-container-background-low", "--salt-container-tertiary-background"],
-
-    ["--salt-editable-background", "--salt-editable-primary-background"],
-    ["--salt-editable-background-low", "--salt-editable-primary-background"],
-    [
-      "--salt-editable-background-medium",
-      "--salt-editable-secondary-background",
-    ],
-    ["--salt-editable-background-high", "--salt-editable-tertiary-background"],
-    ["--salt-editable-text-color", "--salt-text-primary-foreground"],
-
-    [
-      "--salt-selectable-background-selected",
-      "--salt-selectable-cta-background-selected",
-    ],
-    [
-      "--salt-selectable-foreground-selected",
-      "--salt-selectable-cta-foreground-selected",
-    ],
-
-    [
-      "--salt-separable-border-color-1",
-      "--salt-separable-tertiary-borderColor",
-    ],
-
-    [
-      "--salt-status-info-background-high",
-      "--salt-status-info-background-emphasize",
-    ],
-    [
-      "--salt-status-success-background-high",
-      "--salt-status-success-background-emphasize",
-    ],
-    [
-      "--salt-status-warning-background-high",
-      "--salt-status-warning-background-emphasize",
-    ],
-    [
-      "--salt-status-error-background-high",
-      "--salt-status-error-background-emphasize",
-    ],
-
-    ["--salt-text-primary-color", "--salt-text-primary-foreground"],
-    ["--salt-text-secondary-color", "--salt-text-secondary-foreground"],
-
-    ["--salt-spacing-unit", "--salt-size-unit"],
-
-    ["--salt-color-grey-10", "--salt-color-gray-10"],
-    ["--salt-color-grey-20", "--salt-color-gray-20"],
-    ["--salt-color-grey-30", "--salt-color-gray-30"],
-    ["--salt-color-grey-40", "--salt-color-gray-40"],
-    ["--salt-color-grey-50", "--salt-color-gray-50"],
-    ["--salt-color-grey-60", "--salt-color-gray-60"],
-    ["--salt-color-grey-70", "--salt-color-gray-70"],
-    ["--salt-color-grey-80", "--salt-color-gray-80"],
-    ["--salt-color-grey-90", "--salt-color-gray-90"],
-    ["--salt-color-grey-100", "--salt-color-gray-100"],
-    ["--salt-color-grey-200", "--salt-color-gray-200"],
-    ["--salt-color-grey-300", "--salt-color-gray-300"],
-    ["--salt-color-grey-400", "--salt-color-gray-400"],
-    ["--salt-color-grey-500", "--salt-color-gray-500"],
-    ["--salt-color-grey-600", "--salt-color-gray-600"],
-    ["--salt-color-grey-700", "--salt-color-gray-700"],
-    ["--salt-color-grey-800", "--salt-color-gray-800"],
-    ["--salt-color-grey-900", "--salt-color-gray-900"],
-
-    ["--salt-zIndex-appheader", "--salt-zIndex-appHeader"],
-    ["--salt-zIndex-dragobject", "--salt-zIndex-dragObject"],
-    ["--salt-zIndex-contextmenu", "--salt-zIndex-contextMenu"],
-    ["--salt-zIndex-tooltip", "--salt-zIndex-flyover"],
-  ]);
-
-  const knownCss100RenameCheckRegex = new RegExp(
-    Array.from(knownCss100RenamesMap.keys()).join("|"),
-    "g"
-  );
-
   const filePaths = glob.sync("*/**/*.@(css|ts|tsx)", {
     ignore: ["node_modules", "dist"],
   });
 
   verboseOnlyLog("Total files to modify CSS variables", filePaths.length);
+
+  /** A array of css variable to move from / to */
+  const cssMigrationMapArray = [];
+
+  if (gt(v100, fromVersion) && lte(v100, toVersion)) {
+    cssMigrationMapArray.push(...css100RenameMap);
+  }
+
+  if (gt(v130, fromVersion) && lte(v130, toVersion)) {
+    cssMigrationMapArray.push(...css130RenameMap);
+  }
+
+  const cssMigrationMap = new Map(cssMigrationMapArray);
+
+  const knownCssRenameCheckRegex = new RegExp(
+    Array.from(cssMigrationMap.keys()).join("|"),
+    "g"
+  );
 
   for (const filePath of filePaths) {
     verboseOnlyLog("Processing", filePath);
@@ -264,11 +287,13 @@ if (mode === undefined || mode === "css") {
       .map((line, lineIndex) => {
         let newLine = line;
 
-        if (gt(v100, fromVersion) && lte(v100, toVersion)) {
-          newLine = css100(
-            newLine,
-            knownCss100RenameCheckRegex,
-            knownCss100RenamesMap
+        const saltPrefixed = line.replace(/--uitk/g, "--salt");
+
+        if (cssMigrationMap.size > 0) {
+          newLine = migrateCssVar(
+            saltPrefixed,
+            knownCssRenameCheckRegex,
+            cssMigrationMap
           );
         }
 
@@ -293,17 +318,6 @@ if (mode === undefined || mode === "css") {
 }
 
 console.log("All done!");
-
-function css100(line, knownCss100RenameCheckRegex, knownCss100RenamesMap) {
-  const saltPrefixed = line.replace(/--uitk/g, "--salt");
-
-  const knownVarMigrated = migrateCssVar(
-    saltPrefixed,
-    knownCss100RenameCheckRegex,
-    knownCss100RenamesMap
-  );
-  return knownVarMigrated;
-}
 
 function react100(file, saltProviderRenamed) {
   // Imports
@@ -481,6 +495,17 @@ function react120(file) {
   );
 }
 
+function react130(file) {
+  // Components / Types moved from lab to core
+  ["Avatar", "AvatarProps"].forEach((c) =>
+    moveNamedImports(file, {
+      namedImportText: c,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    })
+  );
+}
+
 /**
  *
  * @param {import("ts-morph").ImportDeclaration} declaration
@@ -557,6 +582,11 @@ function moveNamedImports(file, { namedImportText, from, to }) {
           );
           importRemovedFromFrom = true;
           namedImport.remove();
+
+          if (declaration.getNamedImports().length === 0) {
+            verboseOnlyLog("Removed remained empty import line", specifier);
+            declaration.remove();
+          }
           break;
         }
       }
