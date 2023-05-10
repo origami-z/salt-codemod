@@ -8,7 +8,13 @@ import { readFileSync, writeFileSync } from "fs";
 import { parse, lte, lt, gt, gte, SemVer } from "semver";
 
 const yargs = _yargs(hideBin(process.argv));
-const latestSupportedVersion = "1.2.0";
+
+const v100 = parse("1.0.0");
+const v110 = parse("1.1.0");
+const v120 = parse("1.2.0");
+const v130 = parse("1.3.0");
+
+const latestSupportedVersion = "1.3.0";
 
 var {
   tsconfig,
@@ -155,11 +161,6 @@ const css130RenameMap = [
     "--salt-status-negative-foreground",
   ],
 ];
-
-const v100 = parse("1.0.0");
-const v110 = parse("1.1.0");
-const v120 = parse("1.2.0");
-const v130 = parse("1.3.0");
 
 // <-------- TS Code ---------->
 
