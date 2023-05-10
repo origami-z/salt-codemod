@@ -20,8 +20,9 @@ const v110 = parse("1.1.0");
 const v120 = parse("1.2.0");
 const v130 = parse("1.3.0");
 const v140 = parse("1.4.0");
+const v150 = parse("1.5.0");
 
-const latestSupportedVersion = "1.4.0";
+const latestSupportedVersion = "1.5.0";
 
 var {
   tsconfig,
@@ -146,6 +147,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v130, fromVersion) && lte(v130, toVersion)) {
       react130(file);
+    }
+
+    if (gt(v150, fromVersion) && lte(v150, toVersion)) {
+      react150(file);
     }
 
     if (organizeImports) {
@@ -449,6 +454,29 @@ function react130(file) {
       to: "@salt-ds/core",
     })
   );
+}
+
+function react150(file) {
+  // Components / Types moved from lab to core
+  [
+    "Checkbox",
+    "CheckboxProps",
+    "RadioButton",
+    "RadioButtonProps",
+    "RadioButtonGroup",
+    "RadioButtonGroupProps",
+    "RadioButtonIcon",
+    "RadioButtonIconProps",
+    "capitalize",
+  ].forEach((c) =>
+    moveNamedImports(file, {
+      namedImportText: c,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    })
+  );
+
+  // TODO: <Card interactable> => <InteractableCard>
 }
 
 /**
