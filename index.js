@@ -23,8 +23,9 @@ const v130 = parse("1.3.0");
 const v140 = parse("1.4.0");
 const v150 = parse("1.5.0");
 const v160 = parse("1.6.0");
+// nothing needed for 1.7.0
 
-const latestSupportedVersion = "1.6.0";
+const latestSupportedVersion = "1.7.0";
 
 var {
   tsconfig,
