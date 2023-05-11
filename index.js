@@ -1,11 +1,12 @@
+import glob from "fast-glob";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { dirname, join } from "path";
+import process from "process";
+import resolvePackagePath from "resolve-package-path";
+import { gt, lte, parse } from "semver";
 import { Project, SyntaxKind } from "ts-morph";
 import _yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import glob from "fast-glob";
-import { join } from "path";
-import process from "process";
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { parse, lte, lt, gt, gte, SemVer } from "semver";
 
 import {
   css100RenameMap,
@@ -180,16 +181,12 @@ if (mode === undefined || mode === "ts") {
 if (mode === undefined || mode === "css") {
   console.log("Starting CSS variable migrations");
 
-  // TODO: there should be a way to let node to resolve to '@salt-ds/theme' without doing path joining
-  const saltThemeCssPath = join(
-    process.cwd(),
-    "node_modules",
-    "@salt-ds/theme/index.css"
+  const saltDsThemePkgJsonPath = resolvePackagePath(
+    "@salt-ds/theme",
+    process.cwd()
   );
-  // const require = createRequire(import.meta.url);
-  // const pathName = require.resolve("@salt-ds/theme/package.json");
-  // // const dependencyAsset = await import.meta.resolve("@salt-ds/theme/index.css");
-  // console.log({ pathName });
+  const saltThemeCssPath = join(dirname(saltDsThemePkgJsonPath), "index.css");
+
   verboseOnlyLog("Reading Salt theme CSS variables from", saltThemeCssPath);
   const saltThemeCssContent = readFileSync(saltThemeCssPath, {
     encoding: "utf8",
@@ -230,8 +227,9 @@ if (mode === undefined || mode === "css") {
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
 
+  const varEndDetector = "[):]+";
   const knownCssRenameCheckRegex = new RegExp(
-    Array.from(cssMigrationMap.keys()).join("|"),
+    "(" + Array.from(cssMigrationMap.keys()).join("|") + ")" + varEndDetector,
     "g"
   );
 
@@ -735,7 +733,8 @@ function migrateCssVar(line, renameRegex, renameMap) {
   let result = line;
   let match = result.match(renameRegex);
   while (match) {
-    const from = match[0];
+    // rename regex is something like: (--var1|--var2)[\):]+, so remove the trailing indicator
+    const from = match[0].replace(new RegExp("[):]+$"), "");
     const to = renameMap.get(from);
     verboseOnlyLog("Replace css var", from, "to", to);
     result = result.replace(from, to);
