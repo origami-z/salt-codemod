@@ -11,6 +11,7 @@ import {
   css100RenameMap,
   css130RenameMap,
   css140RenameMap,
+  css160RenameMap,
 } from "./cssMaps.js";
 
 const yargs = _yargs(hideBin(process.argv));
@@ -20,8 +21,11 @@ const v110 = parse("1.1.0");
 const v120 = parse("1.2.0");
 const v130 = parse("1.3.0");
 const v140 = parse("1.4.0");
+const v150 = parse("1.5.0");
+const v160 = parse("1.6.0");
+// nothing needed for 1.7.0
 
-const latestSupportedVersion = "1.4.0";
+const latestSupportedVersion = "1.7.0";
 
 var {
   tsconfig,
@@ -148,6 +152,14 @@ if (mode === undefined || mode === "ts") {
       react130(file);
     }
 
+    if (gt(v150, fromVersion) && lte(v150, toVersion)) {
+      react150(file);
+    }
+
+    if (gt(v160, fromVersion) && lte(v160, toVersion)) {
+      react160(file);
+    }
+
     if (organizeImports) {
       file.organizeImports();
     }
@@ -210,6 +222,10 @@ if (mode === undefined || mode === "css") {
 
   if (gt(v140, fromVersion) && lte(v140, toVersion)) {
     cssMigrationMapArray.push(...css140RenameMap);
+  }
+
+  if (gt(v160, fromVersion) && lte(v160, toVersion)) {
+    cssMigrationMapArray.push(...css160RenameMap);
   }
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
@@ -443,6 +459,40 @@ function react120(file) {
 function react130(file) {
   // Components / Types moved from lab to core
   ["Avatar", "AvatarProps"].forEach((c) =>
+    moveNamedImports(file, {
+      namedImportText: c,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    })
+  );
+}
+
+function react150(file) {
+  // Components / Types moved from lab to core
+  [
+    "Checkbox",
+    "CheckboxProps",
+    "RadioButton",
+    "RadioButtonProps",
+    "RadioButtonGroup",
+    "RadioButtonGroupProps",
+    "RadioButtonIcon",
+    "RadioButtonIconProps",
+    "capitalize",
+  ].forEach((c) =>
+    moveNamedImports(file, {
+      namedImportText: c,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    })
+  );
+
+  // TODO: <Card interactable> => <InteractableCard>
+}
+
+function react160(file) {
+  // Components / Types moved from lab to core
+  ["mergeProps"].forEach((c) =>
     moveNamedImports(file, {
       namedImportText: c,
       from: "@salt-ds/lab",
