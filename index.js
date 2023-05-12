@@ -181,6 +181,8 @@ if (mode === undefined || mode === "ts") {
 if (mode === undefined || mode === "css") {
   console.log("Starting CSS variable migrations");
 
+  // Given the script will likely not be installed at the target directory, we need to find `@salt-ds/theme/index.css`
+  // so that it would work both in a simple repo as well as monorepo where the package is installed in parent folders
   const saltDsThemePkgJsonPath = resolvePackagePath(
     "@salt-ds/theme",
     process.cwd()
@@ -206,7 +208,7 @@ if (mode === undefined || mode === "css") {
 
   verboseOnlyLog("Total files to modify CSS variables", filePaths.length);
 
-  /** A array of css variable to move from / to */
+  /** A array of css variable to move from version a to b. */
   const cssMigrationMapArray = [];
 
   if (gt(v100, fromVersion) && lte(v100, toVersion)) {
@@ -227,7 +229,7 @@ if (mode === undefined || mode === "css") {
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
 
-  const varEndDetector = "[):]+";
+  const varEndDetector = "(?!-)";
   const knownCssRenameCheckRegex = new RegExp(
     "(" + Array.from(cssMigrationMap.keys()).join("|") + ")" + varEndDetector,
     "g"
@@ -733,8 +735,7 @@ function migrateCssVar(line, renameRegex, renameMap) {
   let result = line;
   let match = result.match(renameRegex);
   while (match) {
-    // rename regex is something like: (--var1|--var2)[\):]+, so remove the trailing indicator
-    const from = match[0].replace(new RegExp("[):]+$"), "");
+    const from = match[0];
     const to = renameMap.get(from);
     verboseOnlyLog("Replace css var", from, "to", to);
     result = result.replace(from, to);
