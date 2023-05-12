@@ -1,4 +1,4 @@
-Trying to write code mod for converting `@jpmorganchase/uitk-` to `@salt-ds/*`.
+Code mod for converting `@jpmorganchase/uitk-` to `@salt-ds/*`, and version upgrade for `@salt-ds/core`.
 
 ## To use
 

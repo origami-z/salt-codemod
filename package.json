@@ -1,9 +1,12 @@
 {
   "name": "salt-codemod",
   "version": "0.0.1",
-  "description": "",
+  "description": "Codemod to help upgrade `@salt-ds/core`",
   "main": "index.js",
   "type": "module",
+  "bin": {
+    "salt-codemod": "./index.js"
+  },
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
