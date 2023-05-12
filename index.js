@@ -1,11 +1,12 @@
+import glob from "fast-glob";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { dirname, join } from "path";
+import process from "process";
+import resolvePackagePath from "resolve-package-path";
+import { gt, lte, parse } from "semver";
 import { Project, SyntaxKind } from "ts-morph";
 import _yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import glob from "fast-glob";
-import { join } from "path";
-import process from "process";
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { parse, lte, lt, gt, gte, SemVer } from "semver";
 
 import {
   css100RenameMap,
@@ -180,16 +181,14 @@ if (mode === undefined || mode === "ts") {
 if (mode === undefined || mode === "css") {
   console.log("Starting CSS variable migrations");
 
-  // TODO: there should be a way to let node to resolve to '@salt-ds/theme' without doing path joining
-  const saltThemeCssPath = join(
-    process.cwd(),
-    "node_modules",
-    "@salt-ds/theme/index.css"
+  // Given the script will likely not be installed at the target directory, we need to find `@salt-ds/theme/index.css`
+  // so that it would work both in a simple repo as well as monorepo where the package is installed in parent folders
+  const saltDsThemePkgJsonPath = resolvePackagePath(
+    "@salt-ds/theme",
+    process.cwd()
   );
-  // const require = createRequire(import.meta.url);
-  // const pathName = require.resolve("@salt-ds/theme/package.json");
-  // // const dependencyAsset = await import.meta.resolve("@salt-ds/theme/index.css");
-  // console.log({ pathName });
+  const saltThemeCssPath = join(dirname(saltDsThemePkgJsonPath), "index.css");
+
   verboseOnlyLog("Reading Salt theme CSS variables from", saltThemeCssPath);
   const saltThemeCssContent = readFileSync(saltThemeCssPath, {
     encoding: "utf8",
@@ -209,7 +208,7 @@ if (mode === undefined || mode === "css") {
 
   verboseOnlyLog("Total files to modify CSS variables", filePaths.length);
 
-  /** A array of css variable to move from / to */
+  /** A array of css variable to move from version a to b. */
   const cssMigrationMapArray = [];
 
   if (gt(v100, fromVersion) && lte(v100, toVersion)) {
@@ -230,8 +229,9 @@ if (mode === undefined || mode === "css") {
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
 
+  const varEndDetector = "(?!-)";
   const knownCssRenameCheckRegex = new RegExp(
-    Array.from(cssMigrationMap.keys()).join("|"),
+    "(" + Array.from(cssMigrationMap.keys()).join("|") + ")" + varEndDetector,
     "g"
   );
 
