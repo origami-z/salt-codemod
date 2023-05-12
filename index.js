@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import glob from "fast-glob";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
