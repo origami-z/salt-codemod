@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "author": "Zhihao CUi",
   "license": "ISC",
@@ -18,5 +18,8 @@
     "semver": "^7.3.8",
     "ts-morph": "^17.0.1",
     "yargs": "^17.6.2"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
   }
 }
