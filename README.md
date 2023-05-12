@@ -1,4 +1,4 @@
-Code mod for converting `@jpmorganchase/uitk-` to `@salt-ds/*`, and version upgrade for `@salt-ds/core`.
+Code mod for converting `@jpmorganchase/uitk-` to `@salt-ds/*` and version migration for `@salt-ds/core`, mainly import statement updates due to components being moved from lab to core and CSS variable renames due to deprecation.
 
 ## To use
 
