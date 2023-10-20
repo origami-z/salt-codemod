@@ -14,13 +14,15 @@ import { css130RenameMap, react130 } from "./migration/core130.js";
 import { css140RenameMap } from "./migration/core140.js";
 import { react150 } from "./migration/core150.js";
 import { css160RenameMap, react160 } from "./migration/core160.js";
+import { react180 } from "./migration/core180.js";
+import { css182RenameMap } from "./migration/core182.js";
 import {
   getCssRenameCheckRegex,
   migrateCssVar,
   warnUnknownSaltThemeVars,
 } from "./migration/utils.js";
 import { latestSupportedVersion, parsedArgs } from "./utils/args.js";
-import { verboseOnlyLog } from "./utils/log.js";
+import { verboseOnlyDimLog } from "./utils/log.js";
 
 const {
   tsconfig,
@@ -42,6 +44,10 @@ const v140 = parse("1.4.0");
 const v150 = parse("1.5.0");
 const v160 = parse("1.6.0");
 // nothing needed for 1.7.0
+const v180 = parse("1.8.0");
+const v182 = parse("1.8.2");
+// nothing needed for 1.9.0
+// nothing needed for 1.10.0
 
 const fromVersion = parse(fromInput) || parse("0.0.0");
 const toVersion = parse(toInput) || parse(latestSupportedVersion);
@@ -90,7 +96,7 @@ if (mode === undefined || mode === "ts") {
       continue;
     }
 
-    verboseOnlyLog("Processing", filePath);
+    verboseOnlyDimLog("Processing", filePath);
 
     let saltProviderRenamed = false;
 
@@ -116,6 +122,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v160, fromVersion) && lte(v160, toVersion)) {
       react160(file);
+    }
+
+    if (gt(v180, fromVersion) && lte(v180, toVersion)) {
+      react180(file);
     }
 
     if (organizeImports) {
@@ -144,9 +154,10 @@ if (mode === undefined || mode === "css") {
     "@salt-ds/theme",
     process.cwd()
   );
+
   const saltThemeCssPath = join(dirname(saltDsThemePkgJsonPath), "index.css");
 
-  verboseOnlyLog("Reading Salt theme CSS variables from", saltThemeCssPath);
+  verboseOnlyDimLog("Reading Salt theme CSS variables from", saltThemeCssPath);
   const saltThemeCssContent = readFileSync(saltThemeCssPath, {
     encoding: "utf8",
     flag: "r",
@@ -154,7 +165,7 @@ if (mode === undefined || mode === "css") {
   const allSaltThemeCssVars = new Set(
     [...saltThemeCssContent.matchAll(/--salt[-\w]+\b/g)].map((x) => x[0])
   );
-  verboseOnlyLog(
+  verboseOnlyDimLog(
     "Total valid Salt theme CSS var count:",
     allSaltThemeCssVars.size
   );
@@ -163,7 +174,7 @@ if (mode === undefined || mode === "css") {
     ignore: ["node_modules", "dist"],
   });
 
-  verboseOnlyLog("Total files to modify CSS variables", filePaths.length);
+  verboseOnlyDimLog("Total files to modify CSS variables", filePaths.length);
 
   /** A array of css variable to move from version a to b. */
   const cssMigrationMapArray = [];
@@ -184,12 +195,16 @@ if (mode === undefined || mode === "css") {
     cssMigrationMapArray.push(...css160RenameMap);
   }
 
+  if (gt(v182, fromVersion) && lte(v182, toVersion)) {
+    cssMigrationMapArray.push(...css182RenameMap);
+  }
+
   const cssMigrationMap = new Map(cssMigrationMapArray);
 
   const knownCssRenameCheckRegex = getCssRenameCheckRegex(cssMigrationMap);
 
   for (const filePath of filePaths) {
-    verboseOnlyLog("Processing", filePath);
+    verboseOnlyDimLog("Processing", filePath);
 
     const originalContent = readFileSync(filePath, {
       encoding: "utf-8",
@@ -224,7 +239,7 @@ if (mode === undefined || mode === "css") {
 
     if (newContent !== originalContent && !dryRun) {
       writeFileSync(filePath, newContent, { encoding: "utf-8" });
-      verboseOnlyLog("Writing new", filePath);
+      verboseOnlyDimLog("Writing new", filePath);
     }
   }
 

@@ -14,13 +14,13 @@ export function renameImportModuleSpecifier(
   if (partial) {
     if (specifier.includes(from)) {
       const newSpecifier = specifier.replace(from, to);
-      verboseOnlyLog("Rename import from", specifier, "to", newSpecifier);
+      verboseOnlyDimLog("Rename import from", specifier, "to", newSpecifier);
       declaration.setModuleSpecifier(newSpecifier);
       renamed = true;
     }
   } else {
     if (specifier === from) {
-      verboseOnlyLog("Rename import from", from, "to", to);
+      verboseOnlyDimLog("Rename import from", from, "to", to);
       declaration.setModuleSpecifier(to);
       renamed = true;
     }
@@ -29,7 +29,7 @@ export function renameImportModuleSpecifier(
 }
 
 /**
- *
+ * Used when a component is renamed from A -> B
  * @param {import("ts-morph").ImportDeclaration} declaration
  */
 export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
@@ -39,7 +39,7 @@ export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
     const allNamedImports = declaration.getNamedImports();
     for (const namedImports of allNamedImports) {
       if (namedImports.getName() === from) {
-        verboseOnlyLog(
+        verboseOnlyDimLog(
           "Rename named imports from",
           from,
           "to",
