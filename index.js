@@ -9,6 +9,7 @@ import { gt, lte, parse } from "semver";
 import { Project } from "ts-morph";
 import { css100RenameMap, react100 } from "./migration/core100.js";
 import { react110 } from "./migration/core110.js";
+import { react1110 } from "./migration/core1110.js";
 import { react120 } from "./migration/core120.js";
 import { css130RenameMap, react130 } from "./migration/core130.js";
 import { css140RenameMap } from "./migration/core140.js";
@@ -48,6 +49,8 @@ const v180 = parse("1.8.0");
 const v182 = parse("1.8.2");
 // nothing needed for 1.9.0
 // nothing needed for 1.10.0
+const v1110 = parse("1.11.0");
+// NOTE: don't forget to modify `latestSupportedVersion`
 
 const fromVersion = parse(fromInput) || parse("1.0.0");
 const toVersion = parse(toInput) || parse(latestSupportedVersion);
@@ -126,6 +129,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v180, fromVersion) && lte(v180, toVersion)) {
       react180(file);
+    }
+
+    if (gt(v1110, fromVersion) && lte(v1110, toVersion)) {
+      react1110(file);
     }
 
     if (organizeImports) {

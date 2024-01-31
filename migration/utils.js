@@ -56,7 +56,7 @@ export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
 }
 
 /**
- *
+ * Move a named import from one package to another.
  * @param {import("ts-morph").SourceFile} file
  */
 export function moveNamedImports(file, { namedImportText, from, to }) {
@@ -159,6 +159,7 @@ export function renameReactElementName(file, { from, to }) {
 }
 
 /**
+ * Replace prop name/value to a new pair of a component.
  *
  * @param {import("ts-morph").SourceFile} file
  */
