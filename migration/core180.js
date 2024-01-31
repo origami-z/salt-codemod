@@ -21,5 +21,11 @@ export function react180(file) {
       from: "NavItem",
       to: "NavigationItem",
     });
+
+    renameNamedImports(declaration, {
+      moduleSpecifier: "@salt-ds/lab",
+      from: "NavItemProps",
+      to: "NavigationItemProps",
+    });
   }
 }
