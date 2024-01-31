@@ -2,7 +2,7 @@ import _yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 const yargs = _yargs(hideBin(process.argv));
 
-export const latestSupportedVersion = "1.11.1";
+export const latestSupportedVersion = "1.12.0";
 
 export const parsedArgs = await yargs
   .scriptName("salt-ts-morph")

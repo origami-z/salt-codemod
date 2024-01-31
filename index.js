@@ -24,6 +24,7 @@ import {
 } from "./migration/utils.js";
 import { latestSupportedVersion, parsedArgs } from "./utils/args.js";
 import { verboseOnlyDimLog } from "./utils/log.js";
+import { css1120RenameMap, react1120 } from "./migration/core1120.js";
 
 const {
   tsconfig,
@@ -50,6 +51,7 @@ const v182 = parse("1.8.2");
 // nothing needed for 1.9.0
 // nothing needed for 1.10.0
 const v1110 = parse("1.11.0");
+const v1120 = parse("1.12.0");
 // NOTE: don't forget to modify `latestSupportedVersion`
 
 const fromVersion = parse(fromInput) || parse("1.0.0");
@@ -135,6 +137,10 @@ if (mode === undefined || mode === "ts") {
       react1110(file);
     }
 
+    if (gt(v1120, fromVersion) && lte(v1120, toVersion)) {
+      react1120(file);
+    }
+
     if (organizeImports) {
       file.organizeImports();
     }
@@ -204,6 +210,10 @@ if (mode === undefined || mode === "css") {
 
   if (gt(v182, fromVersion) && lte(v182, toVersion)) {
     cssMigrationMapArray.push(...css182RenameMap);
+  }
+
+  if (gt(v1120, fromVersion) && lte(v1120, toVersion)) {
+    cssMigrationMapArray.push(...css1120RenameMap);
   }
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
