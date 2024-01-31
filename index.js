@@ -49,7 +49,7 @@ const v182 = parse("1.8.2");
 // nothing needed for 1.9.0
 // nothing needed for 1.10.0
 
-const fromVersion = parse(fromInput) || parse("0.0.0");
+const fromVersion = parse(fromInput) || parse("1.0.0");
 const toVersion = parse(toInput) || parse(latestSupportedVersion);
 
 console.log(
