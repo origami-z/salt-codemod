@@ -1,7 +1,14 @@
 import { moveNamedImports } from "./utils.js";
 
 export function react1150(file) {
-  ["Scrim", "NavigationItem", "Pagination"].forEach((x) => {
+  [
+    "Scrim",
+    "ScrimProps",
+    "NavigationItem",
+    "NavigationItemProps",
+    "Pagination",
+    "PaginationProps",
+  ].forEach((x) => {
     moveNamedImports(file, {
       namedImportText: x,
       from: "@salt-ds/lab",

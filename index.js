@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import chalk from "chalk";
 import glob from "fast-glob";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
@@ -67,9 +68,9 @@ const toVersion = parse(toInput) || parse(latestSupportedVersion);
 
 console.log(
   "Running codemod from version",
-  fromVersion.format(),
+  chalk.bold(fromVersion.format()),
   "to version",
-  toVersion.format()
+  chalk.bold(toVersion.format())
 );
 
 // <-------- TS Code ---------->
@@ -89,19 +90,21 @@ if (mode === undefined || mode === "ts") {
   // console.log(project);
 
   if (tsConfigExisted) {
-    console.log("Initialising TypeScript project from", tsconfig);
+    console.log(chalk.dim("Initialising TypeScript project from", tsconfig));
     // project.addSourceFilesFromTsConfig();
   } else {
     console.log(
-      "Initialising TypeScript project from source glob:",
-      tsSourceGlob
+      chalk.dim(
+        "Initialising TypeScript project from source glob:",
+        tsSourceGlob
+      )
     );
     // Very bad way of handling monorepo, adding all ts files from `tsSourceGlob` args, by default is all ts* in packages folder
     project.addSourceFilesAtPaths(tsSourceGlob);
   }
 
   const sourceFiles = project.getSourceFiles();
-  console.log("Found", sourceFiles.length, "source files");
+  console.log(chalk.dim("Found", sourceFiles.length, "source files"));
 
   for (const file of sourceFiles) {
     const filePath = file.getFilePath();
@@ -175,13 +178,13 @@ if (mode === undefined || mode === "ts") {
     await project.save();
   }
 
-  console.log("TypeScript conversion done.");
+  console.log(chalk.dim("TypeScript conversion done."));
 }
 
 // <-------- CSS Var ---------->
 
 if (mode === undefined || mode === "css") {
-  console.log("Starting CSS variable migrations");
+  console.log(chalk.dim("Starting CSS variable migrations"));
 
   // Given the script will likely not be installed at the target directory, we need to find `@salt-ds/theme/index.css`
   // so that it would work both in a simple repo as well as monorepo where the package is installed in parent folders
@@ -281,7 +284,7 @@ if (mode === undefined || mode === "css") {
     }
   }
 
-  console.log("CSS variable migrations done.");
+  console.log(chalk.dim("CSS variable migrations done."));
 }
 
 console.log("All done!");
