@@ -29,7 +29,7 @@ export function renameImportModuleSpecifier(
 }
 
 /**
- * Used when a component is renamed from A -> B.
+ * Used when a component is renamed from A -> B. All usage of the import will also be renamed.
  *
  * @param {import("ts-morph").ImportDeclaration} declaration
  */
@@ -131,6 +131,8 @@ export function moveNamedImports(file, { namedImportText, from, to, newName }) {
 }
 
 /**
+ * Rename a React element name, but not import statement.
+ * This is rarely needed, and should consider use `moveNamedImports` with `newName` option instead.
  *
  * @param {import("ts-morph").SourceFile} file
  */
@@ -148,9 +150,7 @@ export function renameReactElementName(file, { from, to }) {
     SyntaxKind.JsxSelfClosingElement,
   ]) {
     for (const descendant of file.getDescendantsOfKind(syntaxKind)) {
-      const identifierNode = descendant.getFirstDescendantByKind(
-        SyntaxKind.Identifier
-      );
+      const identifierNode = descendant.getTagNameNode();
       if (identifierNode) {
         if (identifierNode.getText() === from) {
           verboseOnlyLog(

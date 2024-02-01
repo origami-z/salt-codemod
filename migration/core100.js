@@ -92,12 +92,6 @@ export function react100(file) {
   );
 
   // Component props
-  if (saltProviderRenamed) {
-    renameReactElementName(file, {
-      from: "ToolkitProvider",
-      to: "SaltProvider",
-    });
-  }
 
   // <Panel emphasis="medium"> => <Panel variant="primary">
   // <Panel emphasis="high"> => <Panel variant="secondary">
