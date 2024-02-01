@@ -13,7 +13,7 @@
   "author": "Zhihao CUi",
   "license": "ISC",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "dependencies": {
     "chalk": "^5.3.0",
