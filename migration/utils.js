@@ -1,5 +1,5 @@
-import { SyntaxKind } from "ts-morph";
-import { verboseOnlyLog } from "../utils/log.js";
+import { SyntaxKind, Node } from "ts-morph";
+import { verboseOnlyDimLog, verboseOnlyLog } from "../utils/log.js";
 
 /**
  *
@@ -29,7 +29,8 @@ export function renameImportModuleSpecifier(
 }
 
 /**
- * Used when a component is renamed from A -> B
+ * Used when a component is renamed from A -> B.
+ *
  * @param {import("ts-morph").ImportDeclaration} declaration
  */
 export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
@@ -37,8 +38,8 @@ export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
   let renamed = false;
   if (specifier === moduleSpecifier) {
     const allNamedImports = declaration.getNamedImports();
-    for (const namedImports of allNamedImports) {
-      if (namedImports.getName() === from) {
+    for (const namedImport of allNamedImports) {
+      if (namedImport.getName() === from) {
         verboseOnlyDimLog(
           "Rename named imports from",
           from,
@@ -48,7 +49,10 @@ export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
           specifier
         );
         renamed = true;
-        namedImports.setName(to);
+
+        namedImport.renameAlias(from + "Renamed");
+        namedImport.setName(to);
+        namedImport.removeAliasWithRename();
       }
     }
   }
@@ -57,32 +61,44 @@ export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
 
 /**
  * Move a named import from one package to another.
+ *
+ * Optional `newName` in option, in case a component gets renamed at the same time.
  * @param {import("ts-morph").SourceFile} file
  */
-export function moveNamedImports(file, { namedImportText, from, to }) {
+export function moveNamedImports(file, { namedImportText, from, to, newName }) {
   const allDeclarations = file.getImportDeclarations();
 
   let importRemovedFromFrom = false;
   const declarationMap = new Map();
 
   for (const declaration of allDeclarations) {
-    const specifier = declaration.getModuleSpecifierValue();
-    declarationMap.set(specifier, declaration);
+    const moduleSpecifier = declaration.getModuleSpecifierValue();
+    declarationMap.set(moduleSpecifier, declaration);
 
-    if (specifier === from) {
+    if (moduleSpecifier === from) {
       for (const namedImport of declaration.getNamedImports()) {
         if (namedImport.getText() === namedImportText) {
           verboseOnlyLog(
             "Removed named import",
             namedImportText,
             "from declaration",
-            specifier
+            moduleSpecifier
           );
           importRemovedFromFrom = true;
+          if (newName && newName !== namedImportText) {
+            renameNamedImports(declaration, {
+              moduleSpecifier,
+              from: namedImportText,
+              to: newName,
+            });
+          }
           namedImport.remove();
 
           if (declaration.getNamedImports().length === 0) {
-            verboseOnlyLog("Removed remained empty import line", specifier);
+            verboseOnlyLog(
+              "Removed remained empty import line",
+              moduleSpecifier
+            );
             declaration.remove();
           }
           break;
@@ -91,24 +107,20 @@ export function moveNamedImports(file, { namedImportText, from, to }) {
     }
   }
   if (importRemovedFromFrom) {
+    const newImportName = newName ?? namedImportText;
     if (declarationMap.has(to)) {
-      verboseOnlyLog(
-        "Added named import",
-        namedImportText,
-        "to declaration",
-        to
-      );
-      declarationMap.get(to).addNamedImport(namedImportText);
+      verboseOnlyLog("Added named import", newImportName, "to declaration", to);
+      declarationMap.get(to).addNamedImport(newImportName);
     } else {
       verboseOnlyLog(
         "New named import",
-        namedImportText,
-        "to new declaration",
+        newImportName,
+        "added to new declaration",
         to
       );
       file.addImportDeclarations([
         {
-          namedImports: [namedImportText],
+          namedImports: [newImportName],
           moduleSpecifier: to,
         },
       ]);
@@ -200,6 +212,37 @@ export function replaceReactAttribute(
     }
   }
   return renamed;
+}
+
+/**
+ * Warn when detected removed props of a component.
+ *
+ * @param {import("ts-morph").SourceFile} file
+ */
+export function warnRemovedReactAttribute(
+  file,
+  { elementName, allAttributesRemoved }
+) {
+  for (const syntaxKind of [
+    SyntaxKind.JsxOpeningElement,
+    SyntaxKind.JsxSelfClosingElement,
+  ]) {
+    for (const descendant of file.getDescendantsOfKind(syntaxKind)) {
+      if (descendant.getTagNameNode().getText() === elementName) {
+        for (const attribute of descendant.getAttributes()) {
+          const attributeText = attribute.getFirstDescendant().getText();
+          if (allAttributesRemoved.has(attributeText)) {
+            console.error(
+              `Error: removed prop \`${attributeText}\` of`,
+              elementName,
+              "component detected at",
+              `${file.getFilePath()}:${attribute.getStartLineNumber()}`
+            );
+          }
+        }
+      }
+    }
+  }
 }
 
 /**

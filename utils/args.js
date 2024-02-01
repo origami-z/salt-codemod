@@ -2,7 +2,7 @@ import _yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 const yargs = _yargs(hideBin(process.argv));
 
-export const latestSupportedVersion = "1.12.0";
+export const latestSupportedVersion = "1.16.0";
 
 export const parsedArgs = await yargs
   .scriptName("salt-ts-morph")
@@ -44,10 +44,10 @@ export const parsedArgs = await yargs
   })
   .option("from", {
     type: "string",
-    description: `Semver of salt-ds you're currently on`,
+    description: `Semver of @salt-ds/core package you're currently on`,
   })
   .option("to", {
     type: "string",
-    description: `Semver of salt-ds you're migrating to. Latest supported is ${latestSupportedVersion}`,
+    description: `Semver of @salt-ds/core package you're migrating to. Latest supported is ${latestSupportedVersion}`,
   })
   .help().argv;

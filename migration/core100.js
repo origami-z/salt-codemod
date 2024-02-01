@@ -11,7 +11,7 @@ import {
  *
  * @param {import("ts-morph").SourceFile} file
  */
-export function react100(file, saltProviderRenamed) {
+export function react100(file) {
   // Imports
   for (const declaration of file.getImportDeclarations()) {
     // Rename import declaration first
@@ -38,13 +38,11 @@ export function react100(file, saltProviderRenamed) {
     });
 
     // Rename named imports with new declaration
-    saltProviderRenamed =
-      saltProviderRenamed ||
-      renameNamedImports(declaration, {
-        moduleSpecifier: "@salt-ds/core",
-        from: "ToolkitProvider",
-        to: "SaltProvider",
-      });
+    renameNamedImports(declaration, {
+      moduleSpecifier: "@salt-ds/core",
+      from: "ToolkitProvider",
+      to: "SaltProvider",
+    });
   }
 
   // Components / Types moved from core to lab
@@ -154,7 +152,6 @@ export function react100(file, saltProviderRenamed) {
     attributeTo: "position",
     valueTo: `"east"`,
   });
-  return saltProviderRenamed;
 }
 
 // Everything here is salt prefixed, assuming uitk prefix rename is performed first

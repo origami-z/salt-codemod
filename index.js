@@ -10,6 +10,11 @@ import { Project } from "ts-morph";
 import { css100RenameMap, react100 } from "./migration/core100.js";
 import { react110 } from "./migration/core110.js";
 import { react1110 } from "./migration/core1110.js";
+import { css1120RenameMap, react1120 } from "./migration/core1120.js";
+import { react1130 } from "./migration/core1130.js";
+import { react1140 } from "./migration/core1140.js";
+import { react1150 } from "./migration/core1150.js";
+import { react1160 } from "./migration/core1160.js";
 import { react120 } from "./migration/core120.js";
 import { css130RenameMap, react130 } from "./migration/core130.js";
 import { css140RenameMap } from "./migration/core140.js";
@@ -24,7 +29,6 @@ import {
 } from "./migration/utils.js";
 import { latestSupportedVersion, parsedArgs } from "./utils/args.js";
 import { verboseOnlyDimLog } from "./utils/log.js";
-import { css1120RenameMap, react1120 } from "./migration/core1120.js";
 
 const {
   tsconfig,
@@ -52,6 +56,10 @@ const v182 = parse("1.8.2");
 // nothing needed for 1.10.0
 const v1110 = parse("1.11.0");
 const v1120 = parse("1.12.0");
+const v1130 = parse("1.13.0");
+const v1140 = parse("1.14.0");
+const v1150 = parse("1.15.0");
+const v1160 = parse("1.16.0");
 // NOTE: don't forget to modify `latestSupportedVersion`
 
 const fromVersion = parse(fromInput) || parse("1.0.0");
@@ -103,10 +111,8 @@ if (mode === undefined || mode === "ts") {
 
     verboseOnlyDimLog("Processing", filePath);
 
-    let saltProviderRenamed = false;
-
     if (gt(v100, fromVersion) && lte(v100, toVersion)) {
-      saltProviderRenamed = react100(file, saltProviderRenamed);
+      react100(file);
     }
 
     if (gt(v110, fromVersion) && lte(v110, toVersion)) {
@@ -139,6 +145,22 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1120, fromVersion) && lte(v1120, toVersion)) {
       react1120(file);
+    }
+
+    if (gt(v1130, fromVersion) && lte(v1130, toVersion)) {
+      react1130(file);
+    }
+
+    if (gt(v1140, fromVersion) && lte(v1140, toVersion)) {
+      react1140(file);
+    }
+
+    if (gt(v1150, fromVersion) && lte(v1150, toVersion)) {
+      react1150(file);
+    }
+
+    if (gt(v1160, fromVersion) && lte(v1160, toVersion)) {
+      react1160(file);
     }
 
     if (organizeImports) {
@@ -233,11 +255,10 @@ if (mode === undefined || mode === "css") {
       .map((line, lineIndex) => {
         let newLine = line;
 
-        const saltPrefixed = line.replace(/--uitk/g, "--salt");
-
         if (cssMigrationMap.size > 0) {
           newLine = migrateCssVar(
-            saltPrefixed,
+            // Replace uitk prefix with salt prefix for pre-1.0.0 migration
+            gt(v100, fromVersion) ? line : line.replace(/--uitk/g, "--salt"),
             knownCssRenameCheckRegex,
             cssMigrationMap
           );
