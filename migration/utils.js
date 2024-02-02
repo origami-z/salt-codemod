@@ -1,5 +1,7 @@
 import { SyntaxKind, Node } from "ts-morph";
 import { verboseOnlyDimLog, verboseOnlyLog } from "../utils/log.js";
+import process from "process";
+import { relative } from "path";
 
 /**
  * @typedef {Object} RenameImportModuleSpecifierOption
@@ -245,7 +247,10 @@ export function warnRemovedReactAttribute(
               `Error: removed prop \`${attributeText}\` of`,
               elementName,
               "component detected at",
-              `${file.getFilePath()}:${attribute.getStartLineNumber()}`
+              `${relative(
+                process.cwd(),
+                file.getFilePath()
+              )}:${attribute.getStartLineNumber()}`
             );
           }
         }

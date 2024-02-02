@@ -3,7 +3,7 @@
 import chalk from "chalk";
 import glob from "fast-glob";
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
+import { dirname, join, relative } from "path";
 import process from "process";
 import resolvePackagePath from "resolve-package-path";
 import { gt, lte, parse } from "semver";
@@ -96,7 +96,8 @@ if (mode === undefined || mode === "ts") {
     console.log(
       chalk.dim(
         "Initialising TypeScript project from source glob:",
-        tsSourceGlob
+        tsSourceGlob,
+        ". (Use --tsSourceGlob flag to customize)"
       )
     );
     // Very bad way of handling monorepo, adding all ts files from `tsSourceGlob` args, by default is all ts* in packages folder
@@ -195,7 +196,10 @@ if (mode === undefined || mode === "css") {
 
   const saltThemeCssPath = join(dirname(saltDsThemePkgJsonPath), "index.css");
 
-  verboseOnlyDimLog("Reading Salt theme CSS variables from", saltThemeCssPath);
+  verboseOnlyDimLog(
+    "Reading Salt theme CSS variables from",
+    relative(process.cwd(), saltThemeCssPath)
+  );
   const saltThemeCssContent = readFileSync(saltThemeCssPath, {
     encoding: "utf8",
     flag: "r",
@@ -208,8 +212,18 @@ if (mode === undefined || mode === "css") {
     allSaltThemeCssVars.size
   );
 
-  const filePaths = glob.sync("*/**/*.@(css|ts|tsx)", {
-    ignore: ["node_modules", "dist", "build"],
+  const cssGlob = "*/**/*.@(css|ts|tsx)";
+  const cssIgnoreFolders = ["node_modules", "dist", "build"];
+  console.log(
+    chalk.dim(
+      "Scanning CSS using source glob:",
+      cssGlob,
+      ", ignoring folders:",
+      cssIgnoreFolders
+    )
+  );
+  const filePaths = glob.sync(cssGlob, {
+    ignore: cssIgnoreFolders,
   });
 
   verboseOnlyDimLog("Total files to modify CSS variables", filePaths.length);
