@@ -209,7 +209,7 @@ if (mode === undefined || mode === "css") {
   );
 
   const filePaths = glob.sync("*/**/*.@(css|ts|tsx)", {
-    ignore: ["node_modules", "dist"],
+    ignore: ["node_modules", "dist", "build"],
   });
 
   verboseOnlyDimLog("Total files to modify CSS variables", filePaths.length);
