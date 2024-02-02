@@ -2,8 +2,17 @@ import { SyntaxKind, Node } from "ts-morph";
 import { verboseOnlyDimLog, verboseOnlyLog } from "../utils/log.js";
 
 /**
+ * @typedef {Object} RenameImportModuleSpecifierOption
+ * @property {string} from package name to be renamed from
+ * @property {string} to package name rename to
+ * @property {boolean} partial whether rename on partial match
+ */
+
+/**
  *
  * @param {import("ts-morph").ImportDeclaration} declaration
+ * @param {RenameImportModuleSpecifierOption} option
+ * @returns
  */
 export function renameImportModuleSpecifier(
   declaration,
@@ -278,12 +287,14 @@ export function warnUnknownSaltThemeVars(
 }
 
 /**
+ * !WARN: Be mindful of regex side effect when reusing regex
+ * @link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/lastIndex#avoiding_side_effects
  *
  * @param {Map<string, string>} cssMigrationMap
  * @returns {RegExp}
  */
 export function getCssRenameCheckRegex(cssMigrationMap) {
-  const varEndDetector = "(?!-)";
+  const varEndDetector = "(?![\\w-])";
   return new RegExp(
     "(" + Array.from(cssMigrationMap.keys()).join("|") + ")" + varEndDetector,
     "g"
@@ -297,14 +308,9 @@ export function getCssRenameCheckRegex(cssMigrationMap) {
  * @param {Map<string, string>} renameMap
  */
 export function migrateCssVar(line, renameRegex, renameMap) {
-  let result = line;
-  let match = result.match(renameRegex);
-  while (match) {
-    const from = match[0];
-    const to = renameMap.get(from);
-    verboseOnlyLog("Replace css var", from, "to", to);
-    result = result.replace(from, to);
-    match = result.match(renameRegex);
-  }
-  return result;
+  return line.replaceAll(renameRegex, (match, offset, string) => {
+    const to = renameMap.get(match);
+    verboseOnlyLog("Replace css var", match, "to", to);
+    return to;
+  });
 }

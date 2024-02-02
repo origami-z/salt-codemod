@@ -5,6 +5,7 @@ import {
   moveNamedImports,
   renameReactElementName,
   replaceReactAttribute,
+  migrateCssVar,
 } from "../../migration/utils.js";
 
 /**
@@ -18,19 +19,51 @@ function createFileWithContent(sourceFileString) {
   return file;
 }
 
-describe("getCssRenameCheckRegex", () => {
-  test("regex match var intended", () => {
-    const actual = getCssRenameCheckRegex(
-      new Map([["--salt-a", "--salt-a-new"]])
-    );
-    expect(actual.test("--my-var: var(--salt-a);")).toBe(true);
-    expect(actual.test("--my-var: var(--salt-b);")).toBe(false);
+describe("CSS migration", () => {
+  const cssMap = new Map([
+    ["--salt-a", "--salt-a-new"],
+    ["--salt-b-1", "--salt-b-100"],
+  ]);
+
+  describe("getCssRenameCheckRegex", () => {
+    test("regex match var intended", () => {
+      const actual = getCssRenameCheckRegex(cssMap);
+      expect(actual.test("--my-var: var(--salt-a);")).toBe(true);
+      actual.lastIndex = 0;
+      expect(actual.test("--my-var: var(--salt-b-1);")).toBe(true);
+      actual.lastIndex = 0;
+    });
+    test("regex does not match var with other suffix", () => {
+      const actual = getCssRenameCheckRegex(cssMap);
+      expect(actual.test("--my-var: var(--salt-a-extra);")).toBe(false);
+      actual.lastIndex = 0;
+      expect(actual.test("--my-var: var(--salt-b);")).toBe(false);
+      actual.lastIndex = 0;
+      expect(actual.test("--my-var: var(--salt-b-100);")).toBe(false);
+      actual.lastIndex = 0;
+    });
   });
-  test("regex does not match var with other suffix", () => {
-    const actual = getCssRenameCheckRegex(
-      new Map([["--salt-a", "--salt-a-new"]])
-    );
-    expect(actual.test("--my-var: var(--salt-a-extra);")).toBe(false);
+
+  describe("migrateCssVar", () => {
+    const regexCheck = getCssRenameCheckRegex(cssMap);
+    test("migrate all instances of the same var", () => {
+      const actual = migrateCssVar(
+        "--my-var: var(--salt-a); --my-var: var(--salt-a);",
+        regexCheck,
+        cssMap
+      );
+      expect(actual).toEqual(
+        "--my-var: var(--salt-a-new); --my-var: var(--salt-a-new);"
+      );
+    });
+    test("does not result in a infinite loop when new value includes old value", () => {
+      const actual = migrateCssVar(
+        "--my-var: var(--salt-b-1);",
+        regexCheck,
+        cssMap
+      );
+      expect(actual).toEqual("--my-var: var(--salt-b-100);");
+    });
   });
 });
 
