@@ -28,7 +28,11 @@ import {
   migrateCssVar,
   warnUnknownSaltThemeVars,
 } from "./migration/utils.js";
-import { latestSupportedVersion, parsedArgs } from "./utils/args.js";
+import {
+  DEFAULT_FROM_VERSION,
+  LATEST_SUPPORTED_VERSION,
+  parsedArgs,
+} from "./utils/args.js";
 import { verboseOnlyDimLog } from "./utils/log.js";
 
 const {
@@ -37,7 +41,7 @@ const {
   verbose,
   organizeImports,
   dryRun,
-  only,
+  file: fileFilter,
   mode,
   from: fromInput,
   to: toInput,
@@ -63,8 +67,8 @@ const v1150 = parse("1.15.0");
 const v1160 = parse("1.16.0");
 // NOTE: don't forget to modify `latestSupportedVersion`
 
-const fromVersion = parse(fromInput) || parse("1.0.0");
-const toVersion = parse(toInput) || parse(latestSupportedVersion);
+const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
+const toVersion = parse(toInput) || parse(LATEST_SUPPORTED_VERSION);
 
 console.log(
   "Running codemod from version",
@@ -72,6 +76,10 @@ console.log(
   "to version",
   chalk.bold(toVersion.format())
 );
+
+if (dryRun) {
+  console.log(chalk.bold("Dry run mode"));
+}
 
 // <-------- TS Code ---------->
 
@@ -109,7 +117,8 @@ if (mode === undefined || mode === "ts") {
 
   for (const file of sourceFiles) {
     const filePath = file.getFilePath();
-    if (only && !filePath.includes(only)) {
+    if (fileFilter && !filePath.includes(fileFilter)) {
+      verboseOnlyDimLog("Skipping file due to --file", filePath);
       continue;
     }
 
@@ -260,6 +269,10 @@ if (mode === undefined || mode === "css") {
   const knownCssRenameCheckRegex = getCssRenameCheckRegex(cssMigrationMap);
 
   for (const filePath of filePaths) {
+    if (fileFilter && !filePath.includes(fileFilter)) {
+      verboseOnlyDimLog("Skipping file due to --file", filePath);
+      continue;
+    }
     verboseOnlyDimLog("Processing", filePath);
 
     const originalContent = readFileSync(filePath, {
@@ -301,4 +314,8 @@ if (mode === undefined || mode === "css") {
   console.log(chalk.dim("CSS variable migrations done."));
 }
 
-console.log("All done!");
+if (dryRun) {
+  console.log("Dry run mode done!");
+} else {
+  console.log("All done!");
+}

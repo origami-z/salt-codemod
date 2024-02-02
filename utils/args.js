@@ -2,10 +2,13 @@ import _yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 const yargs = _yargs(hideBin(process.argv));
 
-export const latestSupportedVersion = "1.16.0";
+export const LATEST_SUPPORTED_VERSION = "1.16.0";
+export const DEFAULT_FROM_VERSION = "1.0.0";
 
 export const parsedArgs = await yargs
   .scriptName("salt-ts-morph")
+  .version(LATEST_SUPPORTED_VERSION)
+  .alias("version", "v")
   .usage("$0 <cmd> [args]")
   .option("tsconfig", {
     default: "tsconfig.json",
@@ -30,13 +33,15 @@ export const parsedArgs = await yargs
   })
   .option("dryRun", {
     type: "boolean",
+    alias: "n",
     default: false,
-    description: "When set, no file change will be saved.",
+    description:
+      "When set, no file change will be saved but only logging to console.",
   })
-  .option("only", {
+  .option("file", {
     type: "string",
     description:
-      "When set, only operate on the file matching name. Useful for debugging.",
+      "When set, only operate on the file matching name, after glob filtering. Useful for debugging.",
   })
   .option("mode", {
     type: "string",
@@ -44,10 +49,14 @@ export const parsedArgs = await yargs
   })
   .option("from", {
     type: "string",
-    description: `Semver of @salt-ds/core package you're currently on`,
+    alias: "f",
+    default: DEFAULT_FROM_VERSION,
+    description: `Semver of @salt-ds/core package you're currently on.`,
   })
   .option("to", {
     type: "string",
-    description: `Semver of @salt-ds/core package you're migrating to. Latest supported is ${latestSupportedVersion}`,
+    alias: "t",
+    description: `Semver of @salt-ds/core package you're migrating to. Latest supported is ${LATEST_SUPPORTED_VERSION}.`,
   })
-  .help().argv;
+  .help()
+  .alias("help", "h").argv;
