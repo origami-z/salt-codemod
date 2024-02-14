@@ -115,7 +115,8 @@ export const css1120RenameMap = [
   ["--salt-track-borderWidth-active", "--salt-size-border-strong"],
   ["--salt-track-borderWidth-complete", "--salt-size-border-strong"],
   ["--salt-track-borderWidth-incomplete", "--salt-size-border-strong"],
-  ["--salt-track-borderColor", "--salt-palette-neutral-secondary-border"],
+  // Undeprecate in @salt-ds/lab@1.0.0-alpha.31
+  // ["--salt-track-borderColor", "--salt-palette-neutral-secondary-border"],
 
   // Miscellaneous
   [

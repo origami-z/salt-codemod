@@ -16,6 +16,7 @@ import { react1130 } from "./migration/core1130.js";
 import { react1140 } from "./migration/core1140.js";
 import { react1150 } from "./migration/core1150.js";
 import { react1160 } from "./migration/core1160.js";
+import { react1170 } from "./migration/core1170.js";
 import { react120 } from "./migration/core120.js";
 import { css130RenameMap, react130 } from "./migration/core130.js";
 import { css140RenameMap } from "./migration/core140.js";
@@ -65,6 +66,7 @@ const v1130 = parse("1.13.0");
 const v1140 = parse("1.14.0");
 const v1150 = parse("1.15.0");
 const v1160 = parse("1.16.0");
+const v1170 = parse("1.17.0");
 // NOTE: don't forget to modify `latestSupportedVersion`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
@@ -174,6 +176,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1160, fromVersion) && lte(v1160, toVersion)) {
       react1160(file);
+    }
+
+    if (gt(v1170, fromVersion) && lte(v1170, toVersion)) {
+      react1170(file);
     }
 
     if (organizeImports) {
