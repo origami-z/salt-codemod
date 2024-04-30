@@ -75,6 +75,7 @@ const v1180 = parse("1.18.0");
 const v1190 = parse("1.19.0");
 const v1200 = parse("1.20.0");
 const v1210 = parse("1.21.0");
+// nothing needed for 1.22.0
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
