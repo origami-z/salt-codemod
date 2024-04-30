@@ -35,6 +35,7 @@ import {
   parsedArgs,
 } from "./utils/args.js";
 import { verboseOnlyDimLog } from "./utils/log.js";
+import { css1180RenameMap } from "./migration/core1180.js";
 
 const {
   tsconfig,
@@ -67,7 +68,8 @@ const v1140 = parse("1.14.0");
 const v1150 = parse("1.15.0");
 const v1160 = parse("1.16.0");
 const v1170 = parse("1.17.0");
-// NOTE: don't forget to modify `latestSupportedVersion`
+const v1180 = parse("1.18.0");
+// NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
 const toVersion = parse(toInput) || parse(LATEST_SUPPORTED_VERSION);
@@ -268,6 +270,10 @@ if (mode === undefined || mode === "css") {
 
   if (gt(v1120, fromVersion) && lte(v1120, toVersion)) {
     cssMigrationMapArray.push(...css1120RenameMap);
+  }
+
+  if (gt(v1180, fromVersion) && lte(v1180, toVersion)) {
+    cssMigrationMapArray.push(...css1180RenameMap);
   }
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
