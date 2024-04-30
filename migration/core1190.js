@@ -1,4 +1,8 @@
-import { renameNamedImports, moveNamedImports } from "./utils.js";
+import {
+  renameNamedImports,
+  moveNamedImports,
+  warnRemovedReactAttribute,
+} from "./utils.js";
 
 export function react1190(file) {
   for (const declaration of file.getImportDeclarations()) {

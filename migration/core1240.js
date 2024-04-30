@@ -1,3 +1,9 @@
+import {
+  moveNamedImports,
+  warnRemovedReactAttribute,
+  replaceReactAttribute,
+} from "./utils.js";
+
 // https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Fcore%401.24.0
 
 export function react1240(file) {
