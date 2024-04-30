@@ -1,4 +1,8 @@
-import { moveNamedImports, warnRemovedReactAttribute } from "./utils.js";
+import {
+  moveNamedImports,
+  warnRemovedReactAttribute,
+  replaceReactAttribute,
+} from "./utils.js";
 
 export function react1170(file) {
   // https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Flab%401.0.0-alpha.31
@@ -7,7 +11,20 @@ export function react1170(file) {
     allAttributesRemoved: new Set(["unit"]),
   });
 
-  // TODO: ParentChildLayout prop rename `stackedAtBreakpoint` => `collapseAtBreakpoint` & `stackedViewElement` => `collapsedViewElement`
+  replaceReactAttribute(file, {
+    elementName: "ParentChildLayout",
+    attributeFrom: "stackedAtBreakpoint",
+    attributeTo: "collapseAtBreakpoint",
+  });
+  replaceReactAttribute(file, {
+    elementName: "ParentChildLayout",
+    attributeFrom: "stackedViewElement",
+    attributeTo: "collapsedViewElement",
+  });
+  warnRemovedReactAttribute(file, {
+    elementName: "ParentChildLayout",
+    allAttributesRemoved: new Set(["orientation"]),
+  });
 
   [
     "CircularProgress",

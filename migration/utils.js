@@ -42,6 +42,10 @@ export function renameImportModuleSpecifier(
 /**
  * Used when a component is renamed from A -> B. All usage of the import will also be renamed.
  *
+ * ```
+ * for (const declaration of file.getImportDeclarations()) {...}
+ * ```
+ *
  * @param {import("ts-morph").ImportDeclaration} declaration
  */
 export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
@@ -142,8 +146,9 @@ export function moveNamedImports(file, { namedImportText, from, to, newName }) {
 }
 
 /**
+ * @deprecated Use `renameNamedImports` instead.
+ *
  * Rename a React element name, but not import statement.
- * This is rarely needed, and should consider use `moveNamedImports` with `newName` option instead.
  *
  * @param {import("ts-morph").SourceFile} file
  */
@@ -203,7 +208,10 @@ export function replaceReactAttribute(
             const value = attribute.getFirstChildByKind(
               SyntaxKind.StringLiteral
             );
-            if (value && value.getText() === valueFrom) {
+            if (valueFrom === undefined) {
+              attribute.setName(attributeTo);
+              renamed = true;
+            } else if (value && value.getText() === valueFrom) {
               verboseOnlyLog(
                 "Replace element",
                 elementName,

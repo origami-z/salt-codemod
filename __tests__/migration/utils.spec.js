@@ -224,4 +224,23 @@ describe("replaceReactAttribute", () => {
     const actualResultText = file.getText();
     expect(actualResultText).toContain(`<ComponentOne prop2="b">`);
   });
+
+  test("Renames prop name if only attribute is specificed", () => {
+    const file =
+      createFileWithContent(`import { ComponentOne } from "package-a";
+    export const App = () => {
+      return (
+          <ComponentOne prop1="a">
+            Some text
+          </ComponentOne>
+      );
+    };`);
+    replaceReactAttribute(file, {
+      elementName: "ComponentOne",
+      attributeFrom: "prop1",
+      attributeTo: "prop2",
+    });
+    const actualResultText = file.getText();
+    expect(actualResultText).toContain(`<ComponentOne prop2="a">`);
+  });
 });
