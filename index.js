@@ -37,6 +37,7 @@ import {
 import { verboseOnlyDimLog } from "./utils/log.js";
 import { css1180RenameMap } from "./migration/core1180.js";
 import { react1190 } from "./migration/core1190.js";
+import { react1200 } from "./migration/core1200.js";
 
 const {
   tsconfig,
@@ -71,6 +72,7 @@ const v1160 = parse("1.16.0");
 const v1170 = parse("1.17.0");
 const v1180 = parse("1.18.0");
 const v1190 = parse("1.19.0");
+const v1200 = parse("1.20.0");
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
@@ -188,6 +190,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1190, fromVersion) && lte(v1190, toVersion)) {
       react1190(file);
+    }
+
+    if (gt(v1200, fromVersion) && lte(v1200, toVersion)) {
+      react1200(file);
     }
 
     if (organizeImports) {
