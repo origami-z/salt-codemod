@@ -4,10 +4,10 @@ import { moveNamedImports } from "./utils.js";
 
 export function react1210(file) {
   [
-    "Dropdown",
-    "DropdownProps",
-    "ComboBox",
-    "ComboBoxProps",
+    "DropdownNext",
+    "DropdownNextProps",
+    "ComboBoxNext",
+    "ComboBoxNextProps",
     "Option",
     "OptionProps",
     "OptionGroup",
