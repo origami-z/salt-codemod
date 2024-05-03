@@ -42,6 +42,7 @@ import { react1210 } from "./migration/core1210.js";
 import { react1230 } from "./migration/core1230.js";
 import { react1240 } from "./migration/core1240.js";
 import { react1250 } from "./migration/core1250.js";
+import { react1270 } from "./migration/core1270.js";
 
 const {
   tsconfig,
@@ -83,6 +84,7 @@ const v1230 = parse("1.23.0");
 const v1240 = parse("1.24.0");
 const v1250 = parse("1.25.0");
 // nothing needed for 1.26.0
+const v1270 = parse("1.27.0");
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
@@ -220,6 +222,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1250, fromVersion) && lte(v1250, toVersion)) {
       react1250(file);
+    }
+
+    if (gt(v1270, fromVersion) && lte(v1270, toVersion)) {
+      react1270(file);
     }
 
     if (organizeImports) {
