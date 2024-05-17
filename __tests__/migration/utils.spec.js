@@ -6,6 +6,7 @@ import {
   renameReactElementName,
   replaceReactAttribute,
   migrateCssVar,
+  movePropToChildElement,
 } from "../../migration/utils.js";
 
 /**
@@ -288,5 +289,28 @@ describe("replaceReactAttribute", () => {
     });
     const actualResultText = file.getText();
     expect(actualResultText).toContain(`<ComponentTWO prop2="b">`);
+  });
+});
+
+describe("movePropToChildElement", () => {
+  test("move prop to a new child", () => {
+    const file =
+      createFileWithContent(`import { ComponentOne } from "package-a";
+    export const App = () => {
+      return (
+          <ComponentOne prop1="a">
+            Some text
+          </ComponentOne>
+      );
+    };`);
+    movePropToChildElement(file, {
+      packageName: "package-a",
+      elementName: "ComponentOne",
+      propName: "prop1",
+      newChildName: "NewComponent",
+    });
+
+    const actualResultText = file.getText();
+    console.log(actualResultText);
   });
 });

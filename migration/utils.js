@@ -1,4 +1,4 @@
-import { SyntaxKind, Node } from "ts-morph";
+import { SyntaxKind, Node, JsxElement } from "ts-morph";
 import { verboseOnlyDimLog, verboseOnlyLog } from "../utils/log.js";
 import process from "process";
 import { relative } from "path";
@@ -356,4 +356,81 @@ export function migrateCssVar(line, renameRegex, renameMap) {
     verboseOnlyLog("Replace css var", match, "to", to);
     return to;
   });
+}
+
+/**
+ *
+ * @param {import("ts-morph").SourceFile} file
+ */
+export function movePropToChildElement(
+  file,
+  { packageName, elementName, propName, newChildName }
+) {
+  const allDeclarations = file.getImportDeclarations();
+
+  for (const declaration of allDeclarations) {
+    const moduleSpecifier = declaration.getModuleSpecifierValue();
+
+    if (moduleSpecifier === packageName) {
+      for (const namedImport of declaration.getNamedImports()) {
+        if (namedImport.getText() === elementName) {
+          verboseOnlyLog(
+            "Found component named",
+            elementName,
+            "from declaration",
+            packageName
+          );
+
+          // Below may be useful to find node directly from declaration with using name matching
+          // const nodes = classDeclaration.findReferencesAsNodes();
+
+          const tempEleName = elementName + "Renamed";
+          namedImport.renameAlias(tempEleName);
+
+          for (const descendant of file.getDescendantsOfKind(
+            SyntaxKind.JsxOpeningElement
+          )) {
+            if (descendant.getTagNameNode().getText() === tempEleName) {
+              for (const attribute of descendant.getAttributes()) {
+                const attributeText = attribute.getFirstDescendant().getText();
+                if (attributeText === propName) {
+                  verboseOnlyLog(
+                    "Found prop named",
+                    propName,
+                    "on element",
+                    elementName,
+                    "with temporary name",
+                    tempEleName
+                  );
+
+                  const element = descendant.getFirstAncestorByKind(
+                    SyntaxKind.JsxElement
+                  );
+                  // get existing text between opening and closing element
+                  const openingEle = element.getOpeningElement();
+                  const closingEle = element.getClosingElement();
+
+                  const existingInnerText = file
+                    .getFullText()
+                    .substring(openingEle.getEnd(), closingEle.getPos());
+
+                  // prefix with new element, in raw text, or possibily with JSXElement.getText()
+                  const initializer = attribute.getInitializer();
+                  // if initializer is StringLiteral, extract string?
+                  // otherwise it should be a JsxExpression, which we can move directly to a new element as children?
+                  // const newElement =
+
+                  // element.setBodyText to replace with the new children
+
+                  const text = element.getText();
+                  console.log({ existingInnerText, text });
+                  // element.setBodyText
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
