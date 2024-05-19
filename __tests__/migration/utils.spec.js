@@ -6,7 +6,7 @@ import {
   renameReactElementName,
   replaceReactAttribute,
   migrateCssVar,
-  movePropToChildElement,
+  movePropToNewChildElement,
 } from "../../migration/utils.js";
 
 /**
@@ -293,24 +293,73 @@ describe("replaceReactAttribute", () => {
 });
 
 describe("movePropToChildElement", () => {
-  test("move prop to a new child", () => {
-    const file =
-      createFileWithContent(`import { ComponentOne } from "package-a";
+  describe("WHEN matching package name", () => {
+    test("move prop with string value to a new child", () => {
+      const file =
+        createFileWithContent(`import { ComponentOne } from "package-a";
     export const App = () => {
       return (
-          <ComponentOne prop1="a">
-            Some text
+          <ComponentOne prop1="a" prop2="b">
+            <ChildOne />
           </ComponentOne>
       );
     };`);
-    movePropToChildElement(file, {
-      packageName: "package-a",
-      elementName: "ComponentOne",
-      propName: "prop1",
-      newChildName: "NewComponent",
-    });
+      movePropToNewChildElement(file, {
+        packageName: "package-a",
+        elementName: "ComponentOne",
+        propName: "prop1",
+        newChildName: "NewComponent",
+      });
 
-    const actualResultText = file.getText();
-    console.log(actualResultText);
+      const actualResultText = file.getText();
+      expect(actualResultText).toContain(`<ComponentOne prop2="b">`);
+      expect(actualResultText).not.toContain(`props1="a"`);
+      expect(actualResultText).toContain(`<NewComponent>a</NewComponent>`);
+    });
+    test("move prop with expression value to a new child", () => {
+      const file =
+        createFileWithContent(`import { ComponentOne } from "package-a";
+    export const App = () => {
+      const x = "a";
+      return (
+          <ComponentOne prop1={x} prop2="b">
+            <ChildOne />
+          </ComponentOne>
+      );
+    };`);
+      movePropToNewChildElement(file, {
+        packageName: "package-a",
+        elementName: "ComponentOne",
+        propName: "prop1",
+        newChildName: "NewComponent",
+      });
+
+      const actualResultText = file.getText();
+      expect(actualResultText).toContain(`<ComponentOne prop2="b">`);
+      expect(actualResultText).not.toContain(`props1={x}`);
+      expect(actualResultText).toContain(`<NewComponent>{x}</NewComponent>`);
+    });
+  });
+  describe("WHEN not matching package name", () => {
+    test("should not change even when component name matches", () => {
+      const originalContent = `import { ComponentOne } from "package-b";
+      export const App = () => {
+        return (
+            <ComponentOne prop1="a" prop2="b">
+              <ChildOne />
+            </ComponentOne>
+        );
+      };`;
+      const file = createFileWithContent(originalContent);
+      movePropToNewChildElement(file, {
+        packageName: "package-a",
+        elementName: "ComponentOne",
+        propName: "prop1",
+        newChildName: "NewComponent",
+      });
+
+      const actualResultText = file.getText();
+      expect(actualResultText).toEqual(originalContent);
+    });
   });
 });

@@ -1,4 +1,4 @@
-import { SyntaxKind, Node, JsxElement } from "ts-morph";
+import { SyntaxKind, Node, JsxElement, ts } from "ts-morph";
 import { verboseOnlyDimLog, verboseOnlyLog } from "../utils/log.js";
 import process from "process";
 import { relative } from "path";
@@ -362,7 +362,7 @@ export function migrateCssVar(line, renameRegex, renameMap) {
  *
  * @param {import("ts-morph").SourceFile} file
  */
-export function movePropToChildElement(
+export function movePropToNewChildElement(
   file,
   { packageName, elementName, propName, newChildName }
 ) {
@@ -384,6 +384,7 @@ export function movePropToChildElement(
           // Below may be useful to find node directly from declaration with using name matching
           // const nodes = classDeclaration.findReferencesAsNodes();
 
+          // Temporary rename component name with "Renamed" suffix
           const tempEleName = elementName + "Renamed";
           namedImport.renameAlias(tempEleName);
 
@@ -406,29 +407,86 @@ export function movePropToChildElement(
                   const element = descendant.getFirstAncestorByKind(
                     SyntaxKind.JsxElement
                   );
-                  // get existing text between opening and closing element
-                  const openingEle = element.getOpeningElement();
-                  const closingEle = element.getClosingElement();
+                  element.transform((traversal) => {
+                    const currentNode = traversal.currentNode;
+                    if (ts.isJsxElement(currentNode)) {
+                      const attributesProperties =
+                        currentNode.openingElement.attributes.properties;
+                      for (const property of attributesProperties) {
+                        if (ts.isJsxAttribute(property)) {
+                          if (property.name.escapedText === propName) {
+                            if (property.initializer) {
+                              const newChildElement =
+                                traversal.factory.createJsxElement(
+                                  traversal.factory.createJsxOpeningElement(
+                                    traversal.factory.createIdentifier(
+                                      newChildName
+                                    ),
+                                    undefined, // what is type argument?
+                                    traversal.factory.createJsxAttributes([])
+                                  ),
+                                  ts.isStringLiteral(property.initializer)
+                                    ? [
+                                        traversal.factory.createJsxText(
+                                          property.initializer.text
+                                        ),
+                                      ]
+                                    : // otherwise it should be a JsxExpression, which we can move directly to a new element as children?
+                                      [property.initializer],
+                                  traversal.factory.createJsxClosingElement(
+                                    traversal.factory.createIdentifier(
+                                      newChildName
+                                    )
+                                  )
+                                );
 
-                  const existingInnerText = file
-                    .getFullText()
-                    .substring(openingEle.getEnd(), closingEle.getPos());
+                              const prevChildren =
+                                traversal.visitChildren().children;
 
-                  // prefix with new element, in raw text, or possibily with JSXElement.getText()
-                  const initializer = attribute.getInitializer();
-                  // if initializer is StringLiteral, extract string?
-                  // otherwise it should be a JsxExpression, which we can move directly to a new element as children?
-                  // const newElement =
+                              const newCurrent =
+                                traversal.factory.createJsxElement(
+                                  traversal.factory.createJsxOpeningElement(
+                                    currentNode.openingElement.tagName,
+                                    currentNode.openingElement.typeArguments,
+                                    traversal.factory.createJsxAttributes(
+                                      attributesProperties.filter(
+                                        (p) => p.name.escapedText !== propName
+                                      )
+                                    )
+                                  ),
+                                  [
+                                    // adds a bit of smart formatting, keep existing indentation
+                                    ...(prevChildren.length &&
+                                    ts.isJsxText(prevChildren[0]) &&
+                                    prevChildren[0]
+                                      .containsOnlyTriviaWhiteSpaces
+                                      ? [prevChildren[0]]
+                                      : []),
+                                    newChildElement,
+                                    ...traversal.visitChildren().children,
+                                  ],
+                                  currentNode.closingElement
+                                );
 
-                  // element.setBodyText to replace with the new children
+                              return newCurrent;
+                            }
+                          }
+                        }
+                      }
+                    }
 
-                  const text = element.getText();
-                  console.log({ existingInnerText, text });
-                  // element.setBodyText
+                    return currentNode;
+                  });
+
+                  // Break the loop for getAttributes()
+                  break;
                 }
               }
             }
           }
+
+          // Rename back to original elementName
+          namedImport.renameAlias(elementName);
         }
       }
     }
