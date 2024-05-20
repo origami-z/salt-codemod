@@ -124,25 +124,56 @@ export function moveNamedImports(file, { namedImportText, from, to, newName }) {
   if (importRemovedFromFrom) {
     const newImportName = newName ?? namedImportText;
     if (declarationMap.has(to)) {
-      verboseOnlyLog("Added named import", newImportName, "to declaration", to);
-      declarationMap.get(to).addNamedImport(newImportName);
+      addImportToDeclaration(declarationMap.get(to), {
+        importName: newImportName,
+      });
     } else {
-      verboseOnlyLog(
-        "New named import",
-        newImportName,
-        "added to new declaration",
-        to
-      );
-      file.addImportDeclarations([
-        {
-          namedImports: [newImportName],
-          moduleSpecifier: to,
-        },
-      ]);
+      addImportToNewDeclarations(file, {
+        importName: newImportName,
+        moduleSpecifier: to,
+      });
     }
   }
 
   return importRemovedFromFrom;
+}
+
+/**
+ * Add a new namedImport to an existing declaration
+ *
+ * @param {import("ts-morph").ImportDeclaration} declaration
+ */
+export function addImportToDeclaration(declaration, { importName }) {
+  verboseOnlyLog(
+    "Added named import",
+    importName,
+    "to declaration",
+    declaration.getModuleSpecifierValue()
+  );
+  declaration.addNamedImport(importName);
+}
+
+/**
+ * Add a new namedImport to a net new declaration.
+ *
+ * @param {import("ts-morph").SourceFile} file
+ */
+export function addImportToNewDeclarations(
+  file,
+  { importName, moduleSpecifier }
+) {
+  verboseOnlyLog(
+    "New named import",
+    importName,
+    "added to new declaration",
+    moduleSpecifier
+  );
+  file.addImportDeclarations([
+    {
+      namedImports: [importName],
+      moduleSpecifier,
+    },
+  ]);
 }
 
 /**
@@ -364,9 +395,11 @@ export function migrateCssVar(line, renameRegex, renameMap) {
  */
 export function movePropToNewChildElement(
   file,
-  { packageName, elementName, propName, newChildName }
+  { packageName, elementName, propName, newChildName, newChildPackageName }
 ) {
   const allDeclarations = file.getImportDeclarations();
+
+  let newChildAdded = false;
 
   for (const declaration of allDeclarations) {
     const moduleSpecifier = declaration.getModuleSpecifierValue();
@@ -468,6 +501,8 @@ export function movePropToNewChildElement(
                                   currentNode.closingElement
                                 );
 
+                              newChildAdded = true;
+
                               return newCurrent;
                             }
                           }
@@ -489,6 +524,28 @@ export function movePropToNewChildElement(
           namedImport.renameAlias(elementName);
         }
       }
+    }
+  }
+
+  if (newChildAdded && newChildPackageName) {
+    const existingDecl = allDeclarations.find(
+      (d) => d.getModuleSpecifierValue() === newChildPackageName
+    );
+
+    if (existingDecl) {
+      if (
+        !existingDecl
+          .getNamedImports()
+          .find((n) => n.getName() === newChildName)
+      ) {
+        addImportToDeclaration(existingDecl, { importName: newChildName });
+      }
+      // else, skip if namedImport existed
+    } else {
+      addImportToNewDeclarations(file, {
+        importName: newChildName,
+        moduleSpecifier: newChildPackageName,
+      });
     }
   }
 }

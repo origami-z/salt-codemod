@@ -339,6 +339,82 @@ describe("movePropToChildElement", () => {
       expect(actualResultText).not.toContain(`props1={x}`);
       expect(actualResultText).toContain(`<NewComponent>{x}</NewComponent>`);
     });
+    describe("newChildPackageName", () => {
+      test("a new declaration will be created", () => {
+        const file =
+          createFileWithContent(`import { ComponentOne } from "package-a";
+    export const App = () => {
+      const x = "a";
+      return (
+          <ComponentOne prop1="a" prop2="b">
+            <ChildOne />
+          </ComponentOne>
+      );
+    };`);
+        movePropToNewChildElement(file, {
+          packageName: "package-a",
+          elementName: "ComponentOne",
+          propName: "prop1",
+          newChildName: "NewComponent",
+          newChildPackageName: "package-b",
+        });
+
+        const actualResultText = file.getText();
+        expect(actualResultText).toContain(
+          `import { NewComponent } from "package-b";`
+        );
+      });
+      test("add new component to existing declaration", () => {
+        const file =
+          createFileWithContent(`import { ComponentOne } from "package-a";
+    import { ComponentTwo } from "package-b";
+    export const App = () => {
+      const x = "a";
+      return (
+          <ComponentOne prop1="a" prop2="b">
+            <ChildOne />
+          </ComponentOne>
+      );
+    };`);
+        movePropToNewChildElement(file, {
+          packageName: "package-a",
+          elementName: "ComponentOne",
+          propName: "prop1",
+          newChildName: "NewComponent",
+          newChildPackageName: "package-b",
+        });
+
+        const actualResultText = file.getText();
+        expect(actualResultText).toContain(
+          `import { ComponentTwo, NewComponent } from "package-b";`
+        );
+      });
+    });
+    test("not add new component to declaration with existed component named", () => {
+      const file =
+        createFileWithContent(`import { ComponentOne } from "package-a";
+  import { NewComponent } from "package-b";
+  export const App = () => {
+    const x = "a";
+    return (
+        <ComponentOne prop1="a" prop2="b">
+          <ChildOne />
+        </ComponentOne>
+    );
+  };`);
+      movePropToNewChildElement(file, {
+        packageName: "package-a",
+        elementName: "ComponentOne",
+        propName: "prop1",
+        newChildName: "NewComponent",
+        newChildPackageName: "package-b",
+      });
+
+      const actualResultText = file.getText();
+      expect(actualResultText).toContain(
+        `import { NewComponent } from "package-b";`
+      );
+    });
   });
   describe("WHEN not matching package name", () => {
     test("should not change even when component name matches", () => {
@@ -356,6 +432,7 @@ describe("movePropToChildElement", () => {
         elementName: "ComponentOne",
         propName: "prop1",
         newChildName: "NewComponent",
+        newChildPackageName: "package-b", // this shouldn't be added
       });
 
       const actualResultText = file.getText();
