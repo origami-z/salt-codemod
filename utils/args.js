@@ -74,6 +74,12 @@ export const parsedArgs = await yargs
     type: "boolean",
     description: `Skip check and upgrade all @salt-ds packages. Default to true in dryRun mode.`,
   })
+  // Experimental feature
+  .option("migrateFormControls", {
+    type: "boolean",
+    default: false,
+    description: "When set, perform experimental form control migrations",
+  })
   .help()
   .example(`$0 --from 1.30.0 --to 1.36.0 --tsSourceGlob "packages/**/*.ts*"`)
   .alias("help", "h").argv;

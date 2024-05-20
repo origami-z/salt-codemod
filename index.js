@@ -49,6 +49,8 @@ import {
 } from "./utils/args.js";
 import { verboseOnlyDimLog } from "./utils/log.js";
 
+import { formControls } from "./migration/formControls.js";
+
 const {
   tsconfig,
   tsSourceGlob,
@@ -62,6 +64,7 @@ const {
   skipUpgrade,
   themeCss,
   cssModeGlob: cssGlob,
+  migrateFormControls,
 } = parsedArgs;
 
 const v100 = parse("1.0.0");
@@ -287,6 +290,11 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1360, fromVersion) && lte(v1360, toVersion)) {
       react1360(file);
+    }
+
+    // Experimental feature
+    if (migrateFormControls) {
+      formControls(file);
     }
 
     if (organizeImports) {
