@@ -1,4 +1,4 @@
-import { movePropToNewChildElement } from "./utils.js";
+import { movePropToNewChildElement, moveNamedImports } from "./utils.js";
 
 export function formControls(file) {
   movePropToNewChildElement(file, {
