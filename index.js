@@ -48,6 +48,8 @@ import { react1300 } from "./migration/core1300.js";
 import { react1320 } from "./migration/core1320.js";
 import { react1330 } from "./migration/core1330.js";
 
+import { formControls } from "./migration/formControls.js";
+
 const {
   tsconfig,
   tsSourceGlob,
@@ -58,6 +60,7 @@ const {
   mode,
   from: fromInput,
   to: toInput,
+  migrateFormControls,
 } = parsedArgs;
 
 const v100 = parse("1.0.0");
@@ -253,6 +256,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1330, fromVersion) && lte(v1330, toVersion)) {
       react1330(file);
+    }
+
+    if (migrateFormControls) {
+      formControls(file);
     }
 
     if (organizeImports) {

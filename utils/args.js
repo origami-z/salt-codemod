@@ -58,5 +58,10 @@ export const parsedArgs = await yargs
     alias: "t",
     description: `Semver of @salt-ds/core package you're migrating to. Latest supported is ${LATEST_SUPPORTED_VERSION}.`,
   })
+  .option("migrateFormControls", {
+    type: "boolean",
+    default: false,
+    description: "When set, perform experimental form control migrations",
+  })
   .help()
   .alias("help", "h").argv;
