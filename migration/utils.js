@@ -522,6 +522,7 @@ export function movePropToNewChildElement(
 
           // Rename back to original elementName
           namedImport.renameAlias(elementName);
+          namedImport.removeAlias();
         }
       }
     }
