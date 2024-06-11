@@ -21,4 +21,6 @@ export function react1200(file) {
       to: "@salt-ds/core",
     });
   });
+
+  // TODO: DialogHeader children to header?
 }

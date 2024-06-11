@@ -8,11 +8,16 @@ export function react1210(file) {
     "DropdownNextProps",
     "ComboBoxNext",
     "ComboBoxNextProps",
-    "Option",
-    "OptionProps",
-    "OptionGroup",
-    "OptionGroupProps",
   ].forEach((x) => {
+    moveNamedImports(file, {
+      newName: x.replace("Next", ""),
+      namedImportText: x,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    });
+  });
+
+  ["Option", "OptionProps", "OptionGroup", "OptionGroupProps"].forEach((x) => {
     moveNamedImports(file, {
       namedImportText: x,
       from: "@salt-ds/lab",
