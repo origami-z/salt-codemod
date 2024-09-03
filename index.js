@@ -44,6 +44,9 @@ import { react1240 } from "./migration/core1240.js";
 import { react1250 } from "./migration/core1250.js";
 import { css1270RenameMap, react1270 } from "./migration/core1270.js";
 import { css1280RenameMap, react1280 } from "./migration/core1280.js";
+import { react1300 } from "./migration/core1300.js";
+import { react1320 } from "./migration/core1320.js";
+import { react1330 } from "./migration/core1330.js";
 
 const {
   tsconfig,
@@ -88,6 +91,11 @@ const v1250 = parse("1.25.0");
 const v1270 = parse("1.27.0");
 const v1280 = parse("1.28.0");
 // nothing needed for 1.29.0
+const v1300 = parse("1.30.0");
+// nothing needed for 1.31.0
+const v1320 = parse("1.32.0");
+const v1330 = parse("1.33.0");
+// nothing needed for 1.34.0
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
@@ -233,6 +241,18 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1280, fromVersion) && lte(v1280, toVersion)) {
       react1280(file);
+    }
+
+    if (gt(v1300, fromVersion) && lte(v1300, toVersion)) {
+      react1300(file);
+    }
+
+    if (gt(v1320, fromVersion) && lte(v1320, toVersion)) {
+      react1320(file);
+    }
+
+    if (gt(v1330, fromVersion) && lte(v1330, toVersion)) {
+      react1330(file);
     }
 
     if (organizeImports) {
