@@ -42,7 +42,8 @@ import { react1210 } from "./migration/core1210.js";
 import { react1230 } from "./migration/core1230.js";
 import { react1240 } from "./migration/core1240.js";
 import { react1250 } from "./migration/core1250.js";
-import { react1270 } from "./migration/core1270.js";
+import { css1270RenameMap, react1270 } from "./migration/core1270.js";
+import { css1280RenameMap, react1280 } from "./migration/core1280.js";
 
 const {
   tsconfig,
@@ -85,6 +86,8 @@ const v1240 = parse("1.24.0");
 const v1250 = parse("1.25.0");
 // nothing needed for 1.26.0
 const v1270 = parse("1.27.0");
+const v1280 = parse("1.28.0");
+// nothing needed for 1.29.0
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
@@ -228,6 +231,10 @@ if (mode === undefined || mode === "ts") {
       react1270(file);
     }
 
+    if (gt(v1280, fromVersion) && lte(v1280, toVersion)) {
+      react1280(file);
+    }
+
     if (organizeImports) {
       file.organizeImports();
     }
@@ -318,6 +325,14 @@ if (mode === undefined || mode === "css") {
 
   if (gt(v1180, fromVersion) && lte(v1180, toVersion)) {
     cssMigrationMapArray.push(...css1180RenameMap);
+  }
+
+  if (gt(v1270, fromVersion) && lte(v1270, toVersion)) {
+    cssMigrationMapArray.push(...css1270RenameMap);
+  }
+
+  if (gt(v1270, fromVersion) && lte(v1270, toVersion)) {
+    cssMigrationMapArray.push(...css1280RenameMap);
   }
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
