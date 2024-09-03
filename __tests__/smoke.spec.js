@@ -117,7 +117,22 @@ describe("Smoke test all migration script will run", () => {
     react1300(file);
   });
   test("react1320", () => {
+    const file =
+      createFileWithContent(`import { UNSTABLE_SaltProviderNext } from "@salt-ds/core";
+    export const App = () => {
+      return (
+          <UNSTABLE_SaltProviderNext><div>1</div></UNSTABLE_SaltProviderNext>
+      );
+    };`);
     react1320(file);
+
+    const actualResultText = file.getText();
+
+    expect(
+      actualResultText.includes(
+        "<SaltProviderNext><div>1</div></SaltProviderNext>"
+      )
+    ).toBeTruthy();
   });
   test("react1330", () => {
     react1330(file);
