@@ -351,7 +351,7 @@ if (mode === undefined || mode === "css") {
     cssMigrationMapArray.push(...css1270RenameMap);
   }
 
-  if (gt(v1270, fromVersion) && lte(v1270, toVersion)) {
+  if (gt(v1280, fromVersion) && lte(v1280, toVersion)) {
     cssMigrationMapArray.push(...css1280RenameMap);
   }
 
