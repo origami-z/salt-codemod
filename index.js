@@ -47,7 +47,7 @@ import { css1280RenameMap, react1280 } from "./migration/core1280.js";
 import { react1300 } from "./migration/core1300.js";
 import { react1320 } from "./migration/core1320.js";
 import { react1330 } from "./migration/core1330.js";
-import { css1360RenameMap } from "./migration/core1360.js";
+import { css1360RenameMap, react1360 } from "./migration/core1360.js";
 
 const {
   tsconfig,
