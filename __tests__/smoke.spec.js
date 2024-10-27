@@ -26,6 +26,7 @@ import { react1280 } from "../migration/core1280";
 import { react1300 } from "../migration/core1300";
 import { react1320 } from "../migration/core1320";
 import { react1330 } from "../migration/core1330";
+import { react1360 } from "../migration/core1360";
 
 /**
  *
@@ -136,5 +137,35 @@ describe("Smoke test all migration script will run", () => {
   });
   test("react1330", () => {
     react1330(file);
+  });
+
+  test("react1360", () => {
+    const file = createFileWithContent(`import { Button } from "@salt-ds/core";
+    export const App = () => {
+      return (
+        <>
+          <Button variant="cta">CTA</Button>
+          <Button variant="primary">Primary</Button>
+          <Button variant="secondary">Secondary</Button>
+        </>
+      );
+    };`);
+    react1360(file);
+
+    const actualResultText = file.getText();
+
+    expect(
+      actualResultText.includes(`<Button sentiment="accented">CTA</Button>`)
+    ).toBeTruthy();
+
+    expect(
+      actualResultText.includes(`<Button sentiment="neutral">Primary</Button>`)
+    ).toBeTruthy();
+
+    expect(
+      actualResultText.includes(
+        `<Button appearance="transparent">Secondary</Button>`
+      )
+    ).toBeTruthy();
   });
 });
