@@ -2,7 +2,7 @@ import _yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 const yargs = _yargs(hideBin(process.argv));
 
-export const LATEST_SUPPORTED_VERSION = "1.36.0";
+export const LATEST_SUPPORTED_VERSION = "1.37.1";
 export const DEFAULT_FROM_VERSION = "1.0.0";
 
 export const parsedArgs = await yargs

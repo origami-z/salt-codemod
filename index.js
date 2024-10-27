@@ -99,6 +99,8 @@ const v1330 = parse("1.33.0");
 // nothing needed for 1.34.0
 // nothing needed for 1.35.0
 const v1360 = parse("1.36.0");
+// nothing needed for 1.37.0
+// nothing needed for 1.37.1
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
