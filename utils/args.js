@@ -6,7 +6,7 @@ export const LATEST_SUPPORTED_VERSION = "1.37.1";
 export const DEFAULT_FROM_VERSION = "1.0.0";
 
 export const parsedArgs = await yargs
-  .scriptName("salt-ts-morph")
+  .scriptName("salt-codemod")
   .version(LATEST_SUPPORTED_VERSION)
   .alias("version", "v")
   .usage("$0 <cmd> [args]")
@@ -59,4 +59,5 @@ export const parsedArgs = await yargs
     description: `Semver of @salt-ds/core package you're migrating to. Latest supported is ${LATEST_SUPPORTED_VERSION}.`,
   })
   .help()
+  .example(`$0 --from 1.30.0 --to 1.36.0 --tsSourceGlob "packages/**/*.ts*"`)
   .alias("help", "h").argv;
