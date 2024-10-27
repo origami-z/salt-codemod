@@ -252,10 +252,11 @@ export const css1120RenameMap = [
     "--salt-color-orange-600-fade-border",
   ], // Assume in light mode, --salt-color-orange-400-fade-border in dark mode
 
-  ["--salt-palette-neutral-tertiary-background", "transparent"],
-  ["--salt-palette-neutral-tertiary-background-disabled", "transparent"],
-  ["--salt-palette-neutral-tertiary-border", "transparent"],
-  ["--salt-palette-neutral-tertiary-border-disabled", "transparent"],
+  // Undeprecated : https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Ftheme%401.21.0
+  // ["--salt-palette-neutral-tertiary-background", "transparent"],
+  // ["--salt-palette-neutral-tertiary-background-disabled", "transparent"],
+  // ["--salt-palette-neutral-tertiary-border", "transparent"],
+  // ["--salt-palette-neutral-tertiary-border-disabled", "transparent"],
 
   ["--salt-palette-track-border", "--salt-color-gray-90"],
   ["--salt-palette-track-border-disabled", "--salt-color-gray-90-fade-border"],
