@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "salt-codemod": "0.0.1-alpha.1"
+  },
+  "changesets": []
+}
