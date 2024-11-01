@@ -284,6 +284,12 @@ if (mode === undefined || mode === "ts") {
 if (mode === undefined || mode === "css") {
   console.log(chalk.dim("Starting CSS variable migrations"));
 
+  const cssFile = await import("@salt-ds/theme/index.css", {
+    with: { type: "css" },
+  });
+
+  console.log({ cssFile });
+
   // Given the script will likely not be installed at the target directory, we need to find `@salt-ds/theme/index.css`
   // so that it would work both in a simple repo as well as monorepo where the package is installed in parent folders
   const saltDsThemePkgJsonPath = resolvePackagePath(

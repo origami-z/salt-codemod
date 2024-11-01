@@ -193,8 +193,36 @@ export function renameReactElementName(file, { from, to }) {
  */
 export function replaceReactAttribute(
   file,
-  { elementName, attributeFrom, valueFrom, attributeTo, valueTo }
+  {
+    elementName,
+    attributeFrom,
+    valueFrom,
+    attributeTo,
+    valueTo,
+    packageName = "@salt-ds/core",
+  }
 ) {
+  // Try find matching package name first
+
+  const allDeclarations = file.getImportDeclarations();
+  let actualElementName = elementName;
+  let foundMatchNamedImport = false;
+  for (const declaration of allDeclarations) {
+    const moduleSpecifier = declaration.getModuleSpecifierValue();
+    if (moduleSpecifier === packageName) {
+      for (const namedImport of declaration.getNamedImports()) {
+        if (namedImport.getName() === elementName) {
+          foundMatchNamedImport = true;
+          const aliasNode = namedImport.getAliasNode();
+          if (aliasNode) {
+            actualElementName = aliasNode.getText();
+          }
+        }
+      }
+    }
+  }
+  if (!foundMatchNamedImport) return false;
+
   let renamed = false;
 
   for (const syntaxKind of [
@@ -202,7 +230,7 @@ export function replaceReactAttribute(
     SyntaxKind.JsxSelfClosingElement,
   ]) {
     for (const descendant of file.getDescendantsOfKind(syntaxKind)) {
-      if (descendant.getTagNameNode().getText() === elementName) {
+      if (descendant.getTagNameNode().getText() === actualElementName) {
         for (const attribute of descendant.getAttributes()) {
           if (attribute.getFirstDescendant().getText() === attributeFrom) {
             const value = attribute.getFirstChildByKind(
@@ -213,8 +241,7 @@ export function replaceReactAttribute(
               renamed = true;
             } else if (value && value.getText() === valueFrom) {
               verboseOnlyLog(
-                "Replace element",
-                elementName,
+                `Replace element ${elementName} (actual ${actualElementName})`,
                 "attribute",
                 attributeFrom,
                 valueFrom,

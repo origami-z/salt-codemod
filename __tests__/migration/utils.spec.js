@@ -204,7 +204,7 @@ describe("renameReactElementName", () => {
 });
 
 describe("replaceReactAttribute", () => {
-  test("Renames prop name and value for a component with children", () => {
+  test("renames prop name and value for a component with children", () => {
     const file =
       createFileWithContent(`import { ComponentOne } from "package-a";
     export const App = () => {
@@ -220,12 +220,13 @@ describe("replaceReactAttribute", () => {
       valueFrom: `"a"`,
       attributeTo: "prop2",
       valueTo: `"b"`,
+      packageName: "package-a",
     });
     const actualResultText = file.getText();
     expect(actualResultText).toContain(`<ComponentOne prop2="b">`);
   });
 
-  test("Renames prop name if only attribute is specificed", () => {
+  test("renames prop name if only attribute is specificed", () => {
     const file =
       createFileWithContent(`import { ComponentOne } from "package-a";
     export const App = () => {
@@ -239,8 +240,53 @@ describe("replaceReactAttribute", () => {
       elementName: "ComponentOne",
       attributeFrom: "prop1",
       attributeTo: "prop2",
+      packageName: "package-a",
     });
     const actualResultText = file.getText();
     expect(actualResultText).toContain(`<ComponentOne prop2="a">`);
+  });
+
+  test("will not rename component from unmatched package name", () => {
+    const file =
+      createFileWithContent(`import { ComponentOne } from "package-a";
+      export const App = () => {
+        return (
+            <ComponentOne prop1="a">
+              Some text
+            </ComponentOne>
+        );
+      };`);
+    replaceReactAttribute(file, {
+      elementName: "ComponentOne",
+      attributeFrom: "prop1",
+      valueFrom: `"a"`,
+      attributeTo: "prop2",
+      valueTo: `"b"`,
+      packageName: "DIFFERENT_PACAKGE_NAME!!",
+    });
+    const actualResultText = file.getText();
+    expect(actualResultText).not.toContain(`<ComponentOne prop2="b">`);
+  });
+
+  test("will update named import with changed name (as)", () => {
+    const file =
+      createFileWithContent(`import { ComponentOne as ComponentTWO } from "package-a";
+    export const App = () => {
+      return (
+          <ComponentTWO prop1="a">
+            Some text
+          </ComponentTWO>
+      );
+    };`);
+    replaceReactAttribute(file, {
+      elementName: "ComponentOne",
+      attributeFrom: "prop1",
+      valueFrom: `"a"`,
+      attributeTo: "prop2",
+      valueTo: `"b"`,
+      packageName: "package-a",
+    });
+    const actualResultText = file.getText();
+    expect(actualResultText).toContain(`<ComponentTWO prop2="b">`);
   });
 });

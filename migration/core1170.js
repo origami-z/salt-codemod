@@ -15,11 +15,13 @@ export function react1170(file) {
     elementName: "ParentChildLayout",
     attributeFrom: "stackedAtBreakpoint",
     attributeTo: "collapseAtBreakpoint",
+    packageName: "@salt-ds/lab",
   });
   replaceReactAttribute(file, {
     elementName: "ParentChildLayout",
     attributeFrom: "stackedViewElement",
     attributeTo: "collapsedViewElement",
+    packageName: "@salt-ds/lab",
   });
   warnRemovedReactAttribute(file, {
     elementName: "ParentChildLayout",

@@ -35,5 +35,6 @@ export function react1240(file) {
     elementName: "ParentChildLayout",
     attributeFrom: "collapsedViewElement",
     attributeTo: "visibleView",
+    packageName: "@salt-ds/lab",
   });
 }
