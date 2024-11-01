@@ -9,3 +9,5 @@ Code mod for converting `@jpmorganchase/uitk-` to `@salt-ds/*` and version migra
 Use `--help` to see all available flags. e.g. if you want to migrate from v1.0.0 to v1.1.0, then do `--from 1.0.0 --to 1.1.0`
 
 Note: TypeScript conversion will automatically pick up `tsconfig.json` at the current folder. If you're using monorepo without a tsconfig at the root, could opt to use `tsSourceGlob` instead.
+
+PS: If you run `npm link` in the root folder, you'll be able to run `salt-codemod` as if it's a command. `npm unlink` to undo.
