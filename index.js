@@ -123,7 +123,7 @@ if (!skipUpgrade || !dryRun) {
 
   verboseOnlyDimLog("Package upgraded to ", upgraded); // { '@salt-ds/core': '^1.37.1', ... }
   const newCoreRange = upgraded["@salt-ds/core"];
-  upgradedVersion = coerce(newCoreRange).version;
+  upgradedVersion = coerce(newCoreRange)?.version;
 }
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
@@ -303,12 +303,6 @@ if (mode === undefined || mode === "ts") {
 
 if (mode === undefined || mode === "css") {
   console.log(chalk.dim("Starting CSS variable migrations"));
-
-  const cssFile = await import("@salt-ds/theme/index.css", {
-    with: { type: "css" },
-  });
-
-  console.log({ cssFile });
 
   // Given the script will likely not be installed at the target directory, we need to find `@salt-ds/theme/index.css`
   // so that it would work both in a simple repo as well as monorepo where the package is installed in parent folders
