@@ -3,10 +3,11 @@
 import chalk from "chalk";
 import glob from "fast-glob";
 import { existsSync, readFileSync, writeFileSync } from "fs";
+import ncu from "npm-check-updates";
 import { dirname, join, relative } from "path";
 import process from "process";
 import resolvePackagePath from "resolve-package-path";
-import { gt, lte, parse } from "semver";
+import { coerce, gt, lte, parse } from "semver";
 import { Project } from "ts-morph";
 import { css100RenameMap, react100 } from "./migration/core100.js";
 import { react110 } from "./migration/core110.js";
@@ -17,8 +18,21 @@ import { react1140 } from "./migration/core1140.js";
 import { react1150 } from "./migration/core1150.js";
 import { react1160 } from "./migration/core1160.js";
 import { react1170 } from "./migration/core1170.js";
+import { css1180RenameMap } from "./migration/core1180.js";
+import { react1190 } from "./migration/core1190.js";
 import { react120 } from "./migration/core120.js";
+import { react1200 } from "./migration/core1200.js";
+import { react1210 } from "./migration/core1210.js";
+import { react1230 } from "./migration/core1230.js";
+import { react1240 } from "./migration/core1240.js";
+import { react1250 } from "./migration/core1250.js";
+import { css1270RenameMap, react1270 } from "./migration/core1270.js";
+import { css1280RenameMap, react1280 } from "./migration/core1280.js";
 import { css130RenameMap, react130 } from "./migration/core130.js";
+import { react1300 } from "./migration/core1300.js";
+import { react1320 } from "./migration/core1320.js";
+import { react1330 } from "./migration/core1330.js";
+import { css1360RenameMap, react1360 } from "./migration/core1360.js";
 import { css140RenameMap } from "./migration/core140.js";
 import { react150 } from "./migration/core150.js";
 import { css160RenameMap, react160 } from "./migration/core160.js";
@@ -35,19 +49,6 @@ import {
   parsedArgs,
 } from "./utils/args.js";
 import { verboseOnlyDimLog } from "./utils/log.js";
-import { css1180RenameMap } from "./migration/core1180.js";
-import { react1190 } from "./migration/core1190.js";
-import { react1200 } from "./migration/core1200.js";
-import { react1210 } from "./migration/core1210.js";
-import { react1230 } from "./migration/core1230.js";
-import { react1240 } from "./migration/core1240.js";
-import { react1250 } from "./migration/core1250.js";
-import { css1270RenameMap, react1270 } from "./migration/core1270.js";
-import { css1280RenameMap, react1280 } from "./migration/core1280.js";
-import { react1300 } from "./migration/core1300.js";
-import { react1320 } from "./migration/core1320.js";
-import { react1330 } from "./migration/core1330.js";
-import { css1360RenameMap, react1360 } from "./migration/core1360.js";
 
 const {
   tsconfig,
@@ -59,6 +60,7 @@ const {
   mode,
   from: fromInput,
   to: toInput,
+  skipUpgrade,
 } = parsedArgs;
 
 const v100 = parse("1.0.0");
@@ -101,10 +103,32 @@ const v1330 = parse("1.33.0");
 const v1360 = parse("1.36.0");
 // nothing needed for 1.37.0
 // nothing needed for 1.37.1
-// NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION`
+// NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION` in args.js
+
+if (dryRun) {
+  console.log(chalk.bold("Dry run mode"));
+}
+
+// <-------- Upgrade package.json version ---------->
+
+let upgradedVersion = undefined;
+
+if (!skipUpgrade || !dryRun) {
+  const upgraded = await ncu.run({
+    upgrade: true,
+    filter: new RegExp("@salt-ds"),
+    install: "always",
+    // Logging is not supported in json mode - https://github.com/raineorshine/npm-check-updates/blob/982bd407dd46ec4f8173ed867f117e4d45686981/src/lib/logging.ts#L53-L70
+  });
+
+  verboseOnlyDimLog("Package upgraded to ", upgraded); // { '@salt-ds/core': '^1.37.1', ... }
+  const newCoreRange = upgraded["@salt-ds/core"];
+  upgradedVersion = coerce(newCoreRange).version;
+}
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
-const toVersion = parse(toInput) || parse(LATEST_SUPPORTED_VERSION);
+const toVersion =
+  parse(toInput) || parse(upgradedVersion) || parse(LATEST_SUPPORTED_VERSION);
 
 console.log(
   "Running codemod from version",
@@ -112,10 +136,6 @@ console.log(
   "to version",
   chalk.bold(toVersion.format())
 );
-
-if (dryRun) {
-  console.log(chalk.bold("Dry run mode"));
-}
 
 // <-------- TS Code ---------->
 
