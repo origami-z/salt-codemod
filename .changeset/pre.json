@@ -4,5 +4,7 @@
   "initialVersions": {
     "salt-codemod": "0.1.0-alpha.1"
   },
-  "changesets": []
+  "changesets": [
+    "red-houses-promise"
+  ]
 }
