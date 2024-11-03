@@ -1,7 +1,7 @@
 {
   "name": "salt-codemod",
   "version": "0.0.1",
-  "description": "Codemod to help upgrade `@salt-ds/core`",
+  "description": "Codemod to help upgrade Salt design system packages",
   "main": "index.js",
   "type": "module",
   "bin": {
@@ -13,7 +13,7 @@
   "author": "Zhihao CUi",
   "license": "ISC",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "files": [
     "index.js",
