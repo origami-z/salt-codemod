@@ -241,7 +241,10 @@ export function replaceReactAttribute(
               renamed = true;
             } else if (value && value.getText() === valueFrom) {
               verboseOnlyLog(
-                `Replace element ${elementName} (actual ${actualElementName})`,
+                `Replace element ${elementName}`,
+                actualElementName !== elementName
+                  ? `(actual ${actualElementName})`
+                  : "",
                 "attribute",
                 attributeFrom,
                 valueFrom,

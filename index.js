@@ -113,7 +113,7 @@ if (dryRun) {
 
 let upgradedVersion = undefined;
 
-if (!skipUpgrade || !dryRun) {
+if (!skipUpgrade || dryRun) {
   const upgraded = await ncu.run({
     upgrade: true,
     filter: new RegExp("@salt-ds"),
@@ -121,7 +121,7 @@ if (!skipUpgrade || !dryRun) {
     // Logging is not supported in json mode - https://github.com/raineorshine/npm-check-updates/blob/982bd407dd46ec4f8173ed867f117e4d45686981/src/lib/logging.ts#L53-L70
   });
 
-  verboseOnlyDimLog("Package upgraded to ", upgraded); // { '@salt-ds/core': '^1.37.1', ... }
+  verboseOnlyDimLog("Package upgraded to ", JSON.stringify(upgraded)); // { '@salt-ds/core': '^1.37.1', ... }
   const newCoreRange = upgraded["@salt-ds/core"];
   upgradedVersion = coerce(newCoreRange)?.version;
 }
