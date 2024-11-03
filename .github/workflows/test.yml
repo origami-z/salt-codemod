@@ -1,10 +1,10 @@
 name: "Test"
 on:
   push:
-    branches:
-      - main
+    branches: [main, "release/**"]
   workflow_dispatch:
   pull_request:
+    branches: [main, "release/**"]
 
 jobs:
   test:
