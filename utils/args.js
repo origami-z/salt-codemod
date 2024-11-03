@@ -58,6 +58,10 @@ export const parsedArgs = await yargs
     alias: "t",
     description: `Semver of @salt-ds/core package you're migrating to. Latest supported is ${LATEST_SUPPORTED_VERSION}.`,
   })
+  .option("skipUpgrade", {
+    type: "boolean",
+    description: `Skip check and upgrade all @salt-ds packages. Default to true in dryRun mode.`,
+  })
   .help()
   .example(`$0 --from 1.30.0 --to 1.36.0 --tsSourceGlob "packages/**/*.ts*"`)
   .alias("help", "h").argv;
