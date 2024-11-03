@@ -1,5 +1,5 @@
 ---
-"salt-codemod": patch
+"salt-codemod": minor
 ---
 
 Test npm publish
