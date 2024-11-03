@@ -5,6 +5,9 @@
     "salt-codemod": "0.1.0-alpha.1"
   },
   "changesets": [
-    "red-houses-promise"
+    "new-cycles-swim",
+    "red-houses-promise",
+    "shaggy-games-peel",
+    "sour-flies-repair"
   ]
 }
