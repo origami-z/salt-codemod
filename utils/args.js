@@ -20,6 +20,17 @@ export const parsedArgs = await yargs
     description:
       "React source glob to be used by ts-morph, which is useful for monorepo where tsconfig is not available at the root.",
   })
+  .option("themeCss", {
+    type: "string",
+    default: "node_modules/@salt-ds/theme/index.css",
+    description:
+      "Custom path for `@salt-ds/theme/index.css` file used in CSS mode.",
+  })
+  .option("cssModeGlob", {
+    type: "string",
+    default: "*/**/*.@(css|ts|tsx)",
+    description: "Glob pattern where CSS part of codemod will operate on.",
+  })
   .option("verbose", {
     type: "boolean",
     default: false,
@@ -46,6 +57,7 @@ export const parsedArgs = await yargs
   .option("mode", {
     type: "string",
     description: `Use this to operate only one sub-section of the codemod needed. i.e. "ts", "css". `,
+    coerce: (opt) => opt.toLowerCase(),
   })
   .option("from", {
     type: "string",

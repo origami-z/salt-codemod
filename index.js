@@ -4,9 +4,8 @@ import chalk from "chalk";
 import glob from "fast-glob";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import ncu from "npm-check-updates";
-import { dirname, join, relative } from "path";
+import { relative } from "path";
 import process from "process";
-import resolvePackagePath from "resolve-package-path";
 import { coerce, gt, lte, parse } from "semver";
 import { Project } from "ts-morph";
 import { css100RenameMap, react100 } from "./migration/core100.js";
@@ -61,6 +60,8 @@ const {
   from: fromInput,
   to: toInput,
   skipUpgrade,
+  themeCss,
+  cssModeGlob: cssGlob,
 } = parsedArgs;
 
 const v100 = parse("1.0.0");
@@ -113,7 +114,7 @@ if (dryRun) {
 
 let upgradedVersion = undefined;
 
-if (!skipUpgrade || !dryRun) {
+if (!skipUpgrade || dryRun) {
   const upgraded = await ncu.run({
     upgrade: true,
     filter: new RegExp("@salt-ds"),
@@ -121,9 +122,13 @@ if (!skipUpgrade || !dryRun) {
     // Logging is not supported in json mode - https://github.com/raineorshine/npm-check-updates/blob/982bd407dd46ec4f8173ed867f117e4d45686981/src/lib/logging.ts#L53-L70
   });
 
-  verboseOnlyDimLog("Package upgraded to ", upgraded); // { '@salt-ds/core': '^1.37.1', ... }
-  const newCoreRange = upgraded["@salt-ds/core"];
-  upgradedVersion = coerce(newCoreRange)?.version;
+  if (Object.entries(upgraded).length) {
+    verboseOnlyDimLog("Package upgraded to ", JSON.stringify(upgraded)); // { '@salt-ds/core': '^1.37.1', ... }
+    const newCoreRange = upgraded["@salt-ds/core"];
+    upgradedVersion = coerce(newCoreRange)?.version;
+  } else {
+    verboseOnlyDimLog("No @salt-ds/* package was upgraded");
+  }
 }
 
 const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
@@ -304,20 +309,11 @@ if (mode === undefined || mode === "ts") {
 if (mode === undefined || mode === "css") {
   console.log(chalk.dim("Starting CSS variable migrations"));
 
-  // Given the script will likely not be installed at the target directory, we need to find `@salt-ds/theme/index.css`
-  // so that it would work both in a simple repo as well as monorepo where the package is installed in parent folders
-  const saltDsThemePkgJsonPath = resolvePackagePath(
-    "@salt-ds/theme",
-    process.cwd()
-  );
-
-  const saltThemeCssPath = join(dirname(saltDsThemePkgJsonPath), "index.css");
-
   verboseOnlyDimLog(
     "Reading Salt theme CSS variables from",
-    relative(process.cwd(), saltThemeCssPath)
+    relative(process.cwd(), themeCss)
   );
-  const saltThemeCssContent = readFileSync(saltThemeCssPath, {
+  const saltThemeCssContent = readFileSync(themeCss, {
     encoding: "utf8",
     flag: "r",
   });
@@ -329,7 +325,6 @@ if (mode === undefined || mode === "css") {
     allSaltThemeCssVars.size
   );
 
-  const cssGlob = "*/**/*.@(css|ts|tsx)";
   const cssIgnoreFolders = ["node_modules", "dist", "build"];
   console.log(
     chalk.dim(
@@ -343,7 +338,10 @@ if (mode === undefined || mode === "css") {
     ignore: cssIgnoreFolders,
   });
 
-  verboseOnlyDimLog("Total files to modify CSS variables", filePaths.length);
+  verboseOnlyDimLog(
+    "Total files to scan for migrating CSS variables:",
+    filePaths.length
+  );
 
   /** A array of css variable to move from version a to b. */
   const cssMigrationMapArray = [];
