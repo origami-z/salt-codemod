@@ -1,4 +1,4 @@
-import { SyntaxKind, Node } from "ts-morph";
+import { SyntaxKind, Node, JsxElement, ts } from "ts-morph";
 import { verboseOnlyDimLog, verboseOnlyLog } from "../utils/log.js";
 import process from "process";
 import { relative } from "path";
@@ -124,25 +124,56 @@ export function moveNamedImports(file, { namedImportText, from, to, newName }) {
   if (importRemovedFromFrom) {
     const newImportName = newName ?? namedImportText;
     if (declarationMap.has(to)) {
-      verboseOnlyLog("Added named import", newImportName, "to declaration", to);
-      declarationMap.get(to).addNamedImport(newImportName);
+      addImportToDeclaration(declarationMap.get(to), {
+        importName: newImportName,
+      });
     } else {
-      verboseOnlyLog(
-        "New named import",
-        newImportName,
-        "added to new declaration",
-        to
-      );
-      file.addImportDeclarations([
-        {
-          namedImports: [newImportName],
-          moduleSpecifier: to,
-        },
-      ]);
+      addImportToNewDeclarations(file, {
+        importName: newImportName,
+        moduleSpecifier: to,
+      });
     }
   }
 
   return importRemovedFromFrom;
+}
+
+/**
+ * Add a new namedImport to an existing declaration
+ *
+ * @param {import("ts-morph").ImportDeclaration} declaration
+ */
+export function addImportToDeclaration(declaration, { importName }) {
+  verboseOnlyLog(
+    "Added named import",
+    importName,
+    "to declaration",
+    declaration.getModuleSpecifierValue()
+  );
+  declaration.addNamedImport(importName);
+}
+
+/**
+ * Add a new namedImport to a net new declaration.
+ *
+ * @param {import("ts-morph").SourceFile} file
+ */
+export function addImportToNewDeclarations(
+  file,
+  { importName, moduleSpecifier }
+) {
+  verboseOnlyLog(
+    "New named import",
+    importName,
+    "added to new declaration",
+    moduleSpecifier
+  );
+  file.addImportDeclarations([
+    {
+      namedImports: [importName],
+      moduleSpecifier,
+    },
+  ]);
 }
 
 /**
@@ -356,4 +387,166 @@ export function migrateCssVar(line, renameRegex, renameMap) {
     verboseOnlyLog("Replace css var", match, "to", to);
     return to;
   });
+}
+
+/**
+ *
+ * @param {import("ts-morph").SourceFile} file
+ */
+export function movePropToNewChildElement(
+  file,
+  { packageName, elementName, propName, newChildName, newChildPackageName }
+) {
+  const allDeclarations = file.getImportDeclarations();
+
+  let newChildAdded = false;
+
+  for (const declaration of allDeclarations) {
+    const moduleSpecifier = declaration.getModuleSpecifierValue();
+
+    if (moduleSpecifier === packageName) {
+      for (const namedImport of declaration.getNamedImports()) {
+        if (namedImport.getText() === elementName) {
+          verboseOnlyLog(
+            "Found component named",
+            elementName,
+            "from declaration",
+            packageName
+          );
+
+          // Below may be useful to find node directly from declaration with using name matching
+          // const nodes = classDeclaration.findReferencesAsNodes();
+
+          // Temporary rename component name with "Renamed" suffix
+          const tempEleName = elementName + "Renamed";
+          namedImport.renameAlias(tempEleName);
+
+          for (const descendant of file.getDescendantsOfKind(
+            SyntaxKind.JsxOpeningElement
+          )) {
+            if (descendant.getTagNameNode().getText() === tempEleName) {
+              for (const attribute of descendant.getAttributes()) {
+                const attributeText = attribute.getFirstDescendant().getText();
+                if (attributeText === propName) {
+                  verboseOnlyLog(
+                    "Found prop named",
+                    propName,
+                    "on element",
+                    elementName,
+                    "with temporary name",
+                    tempEleName
+                  );
+
+                  const element = descendant.getFirstAncestorByKind(
+                    SyntaxKind.JsxElement
+                  );
+                  element.transform((traversal) => {
+                    const currentNode = traversal.currentNode;
+                    if (ts.isJsxElement(currentNode)) {
+                      const attributesProperties =
+                        currentNode.openingElement.attributes.properties;
+                      for (const property of attributesProperties) {
+                        if (ts.isJsxAttribute(property)) {
+                          if (property.name.escapedText === propName) {
+                            if (property.initializer) {
+                              const newChildElement =
+                                traversal.factory.createJsxElement(
+                                  traversal.factory.createJsxOpeningElement(
+                                    traversal.factory.createIdentifier(
+                                      newChildName
+                                    ),
+                                    undefined, // what is type argument?
+                                    traversal.factory.createJsxAttributes([])
+                                  ),
+                                  ts.isStringLiteral(property.initializer)
+                                    ? [
+                                        traversal.factory.createJsxText(
+                                          property.initializer.text
+                                        ),
+                                      ]
+                                    : // otherwise it should be a JsxExpression, which we can move directly to a new element as children?
+                                      [property.initializer],
+                                  traversal.factory.createJsxClosingElement(
+                                    traversal.factory.createIdentifier(
+                                      newChildName
+                                    )
+                                  )
+                                );
+
+                              const prevChildren =
+                                traversal.visitChildren().children;
+
+                              const newCurrent =
+                                traversal.factory.createJsxElement(
+                                  traversal.factory.createJsxOpeningElement(
+                                    currentNode.openingElement.tagName,
+                                    currentNode.openingElement.typeArguments,
+                                    traversal.factory.createJsxAttributes(
+                                      attributesProperties.filter(
+                                        (p) => p.name.escapedText !== propName
+                                      )
+                                    )
+                                  ),
+                                  [
+                                    // adds a bit of smart formatting, keep existing indentation
+                                    ...(prevChildren.length &&
+                                    ts.isJsxText(prevChildren[0]) &&
+                                    prevChildren[0]
+                                      .containsOnlyTriviaWhiteSpaces
+                                      ? [prevChildren[0]]
+                                      : []),
+                                    newChildElement,
+                                    ...traversal.visitChildren().children,
+                                  ],
+                                  currentNode.closingElement
+                                );
+
+                              newChildAdded = true;
+
+                              return newCurrent;
+                            }
+                          }
+                        }
+                      }
+                    }
+
+                    return currentNode;
+                  });
+
+                  // Break the loop for getAttributes()
+                  break;
+                }
+              }
+            }
+          }
+
+          // Rename back to original elementName
+          namedImport.renameAlias(elementName);
+          namedImport.removeAlias();
+        }
+      }
+    }
+  }
+
+  if (newChildAdded && newChildPackageName) {
+    const existingDecl = allDeclarations.find(
+      (d) => d.getModuleSpecifierValue() === newChildPackageName
+    );
+
+    if (existingDecl) {
+      if (
+        !existingDecl
+          .getNamedImports()
+          .find((n) => n.getName() === newChildName)
+      ) {
+        addImportToDeclaration(existingDecl, { importName: newChildName });
+      }
+      // else, skip if namedImport existed
+    } else {
+      addImportToNewDeclarations(file, {
+        importName: newChildName,
+        moduleSpecifier: newChildPackageName,
+      });
+    }
+  }
 }
