@@ -14,3 +14,7 @@ export function verboseOnlyLog(...data) {
 export function verboseOnlyBoldLog(...data) {
   (verbose || dryRun) && console.log(chalk.bold(...data));
 }
+
+export function verboseOnlyTableLog(...data) {
+  (verbose || dryRun) && console.table(...data);
+}

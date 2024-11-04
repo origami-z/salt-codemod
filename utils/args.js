@@ -13,12 +13,12 @@ export const parsedArgs = await yargs
   .option("tsconfig", {
     default: "tsconfig.json",
     description:
-      "React code is modified using ts-morph, which needs a path to your tsconfig.json file.",
+      "React code is modified using ts-morph, which needs a path to your tsconfig.json file. Ignored when `tsSourceGlob` is provided.",
   })
   .option("tsSourceGlob", {
-    default: "packages/**/*.ts*",
-    description:
-      "React source glob to be used by ts-morph, which is useful for monorepo where tsconfig is not available at the root.",
+    type: "string",
+    description: `React source glob to be used by ts-morph, which is useful for monorepo where tsconfig is not available at the root.
+When provided, \`tsconfig\` is ignored.  e.g., "packages/**/*.ts*"`,
   })
   .option("themeCss", {
     type: "string",
@@ -34,7 +34,6 @@ export const parsedArgs = await yargs
   .option("verbose", {
     type: "boolean",
     default: false,
-    alias: "v",
     description: "verbose logging",
   })
   .option("organizeImports", {
