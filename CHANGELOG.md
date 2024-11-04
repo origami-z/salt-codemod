@@ -1,5 +1,12 @@
 # salt-codemod
 
+## 0.1.0-alpha.2
+
+### Patch Changes
+
+- 26c8707: Changed logic so when `tsSourceGlob` is provided, `tsconifg` option is ignored
+- 26c8707: Use terminal width for yargs
+
 ## 0.1.0-alpha.1
 
 ### Patch Changes
