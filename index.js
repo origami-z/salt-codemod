@@ -47,7 +47,14 @@ import {
   LATEST_SUPPORTED_VERSION,
   parsedArgs,
 } from "./utils/args.js";
-import { verboseOnlyDimLog } from "./utils/log.js";
+import {
+  verboseOnlyDimLog,
+  verboseOnlyTableLog,
+  verboseOnlyLog,
+} from "./utils/log.js";
+
+verboseOnlyLog("Args used:");
+verboseOnlyTableLog(parsedArgs);
 
 const {
   tsconfig,
@@ -148,17 +155,20 @@ if (mode === undefined || mode === "ts") {
   // Check, in case of monorepo which doesn't have tsconfig at the root
   const tsConfigExisted = existsSync(tsconfig);
 
+  // Ignore tsconfig if `tsSourceGlob` option is provided
+  const initialiseFromTsConfig = !tsSourceGlob && tsConfigExisted;
+
   const project = new Project({
     // Optionally specify compiler options, tsconfig.json, in-memory file system, and more here.
     // If you initialize with a tsconfig.json, then it will automatically populate the project
     // with the associated source files.
     // Read more: https://ts-morph.com/setup/
-    tsConfigFilePath: tsConfigExisted ? tsconfig : undefined,
+    tsConfigFilePath: initialiseFromTsConfig ? tsconfig : undefined,
   });
 
   // console.log(project);
 
-  if (tsConfigExisted) {
+  if (initialiseFromTsConfig) {
     console.log(chalk.dim("Initialising TypeScript project from", tsconfig));
     // project.addSourceFilesFromTsConfig();
   } else {
@@ -169,7 +179,7 @@ if (mode === undefined || mode === "ts") {
         ". (Use --tsSourceGlob flag to customize)"
       )
     );
-    // Very bad way of handling monorepo, adding all ts files from `tsSourceGlob` args, by default is all ts* in packages folder
+    // One example way of handling monorepo, adding all ts files from `tsSourceGlob` args, by default is all ts* in packages folder
     project.addSourceFilesAtPaths(tsSourceGlob);
   }
 
