@@ -27,6 +27,7 @@ import { react1300 } from "../migration/core1300";
 import { react1320 } from "../migration/core1320";
 import { react1330 } from "../migration/core1330";
 import { react1360 } from "../migration/core1360";
+import { react1370 } from "../migration/core1370";
 
 /**
  *
@@ -167,5 +168,20 @@ describe("Smoke test all migration script will run", () => {
         `<Button appearance="transparent">Secondary</Button>`
       )
     ).toBeTruthy();
+  });
+
+  test("react1370", () => {
+    const file =
+      createFileWithContent(`import { SuccessSmallIcon } from "@salt-ds/icons";
+    export const App = () => {
+      return (
+        <SuccessSmallIcon />
+      );
+    };`);
+    react1370(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`<CheckmarkIcon />`)).toBeTruthy();
   });
 });
