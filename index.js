@@ -32,6 +32,7 @@ import { react1300 } from "./migration/core1300.js";
 import { react1320 } from "./migration/core1320.js";
 import { react1330 } from "./migration/core1330.js";
 import { css1360RenameMap, react1360 } from "./migration/core1360.js";
+import { react1370 } from "./migration/core1370.js";
 import { css140RenameMap } from "./migration/core140.js";
 import { react150 } from "./migration/core150.js";
 import { css160RenameMap, react160 } from "./migration/core160.js";
@@ -49,8 +50,8 @@ import {
 } from "./utils/args.js";
 import {
   verboseOnlyDimLog,
-  verboseOnlyTableLog,
   verboseOnlyLog,
+  verboseOnlyTableLog,
 } from "./utils/log.js";
 
 verboseOnlyLog("Args used:");
@@ -111,6 +112,7 @@ const v1330 = parse("1.33.0");
 const v1360 = parse("1.36.0");
 // nothing needed for 1.37.0
 // nothing needed for 1.37.1
+const v1372 = parse("1.37.2");
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION` in args.js
 
 if (dryRun) {
@@ -297,6 +299,10 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1360, fromVersion) && lte(v1360, toVersion)) {
       react1360(file);
+    }
+
+    if (gt(v1372, fromVersion) && lte(v1372, toVersion)) {
+      react1370(file);
     }
 
     if (organizeImports) {

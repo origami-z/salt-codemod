@@ -11,6 +11,7 @@ import { relative } from "path";
  */
 
 /**
+ * Rename package name.
  *
  * @param {import("ts-morph").ImportDeclaration} declaration
  * @param {RenameImportModuleSpecifierOption} option
@@ -41,6 +42,7 @@ export function renameImportModuleSpecifier(
 
 /**
  * Used when a component is renamed from A -> B. All usage of the import will also be renamed.
+ * Also useful when a component is deprecated in favor of another.
  *
  * ```
  * for (const declaration of file.getImportDeclarations()) {...}
