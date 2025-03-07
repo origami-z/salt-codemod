@@ -5,6 +5,7 @@
     "salt-codemod": "0.1.0-alpha.1"
   },
   "changesets": [
+    "curly-pets-pay",
     "new-cycles-swim",
     "red-houses-promise",
     "shaggy-games-peel",

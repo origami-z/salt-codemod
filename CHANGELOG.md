@@ -1,5 +1,11 @@
 # salt-codemod
 
+## 0.1.0-alpha.3
+
+### Minor Changes
+
+- 8a5c7a4: Supports upto @salt-ds/core@1.39.0
+
 ## 0.1.0-alpha.2
 
 ### Patch Changes
