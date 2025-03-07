@@ -170,6 +170,17 @@ describe("Smoke test all migration script will run", () => {
     ).toBeTruthy();
   });
   test("react1372", () => {
+    const file =
+      createFileWithContent(`import { SuccessSmallIcon } from "@salt-ds/icons";
+  export const App = () => {
+    return (
+      <SuccessSmallIcon />
+    );
+  };`);
     react1372(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`<CheckmarkIcon />`)).toBeTruthy();
   });
 });
