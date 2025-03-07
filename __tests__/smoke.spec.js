@@ -27,6 +27,7 @@ import { react1300 } from "../migration/core1300";
 import { react1320 } from "../migration/core1320";
 import { react1330 } from "../migration/core1330";
 import { react1360 } from "../migration/core1360";
+import { react1372 } from "../migration/core1372";
 
 /**
  *
@@ -167,5 +168,8 @@ describe("Smoke test all migration script will run", () => {
         `<Button appearance="transparent">Secondary</Button>`
       )
     ).toBeTruthy();
+  });
+  test("react1372", () => {
+    react1372(file);
   });
 });

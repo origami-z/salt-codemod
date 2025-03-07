@@ -52,6 +52,9 @@ import {
   verboseOnlyTableLog,
   verboseOnlyLog,
 } from "./utils/log.js";
+import { react1372 } from "./migration/core1372.js";
+import { react1380 } from "./migration/core1380.js";
+import { react1390 } from "./migration/core1390.js";
 
 verboseOnlyLog("Args used:");
 verboseOnlyTableLog(parsedArgs);
@@ -111,6 +114,9 @@ const v1330 = parse("1.33.0");
 const v1360 = parse("1.36.0");
 // nothing needed for 1.37.0
 // nothing needed for 1.37.1
+const v1372 = parse("1.37.2");
+const v1380 = parse("1.38.0");
+const v1390 = parse("1.39.0");
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION` in args.js
 
 if (dryRun) {
@@ -297,6 +303,18 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1360, fromVersion) && lte(v1360, toVersion)) {
       react1360(file);
+    }
+
+    if (gt(v1372, fromVersion) && lte(v1372, toVersion)) {
+      react1372(file);
+    }
+
+    if (gt(v1380, fromVersion) && lte(v1380, toVersion)) {
+      react1380(file);
+    }
+
+    if (gt(v1390, fromVersion) && lte(v1390, toVersion)) {
+      react1390(file);
     }
 
     if (organizeImports) {

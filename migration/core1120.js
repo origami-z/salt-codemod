@@ -173,7 +173,7 @@ export const css1120RenameMap = [
   ["--salt-navigable-indicator-activeDisabled", "rgba(224, 101, 25, 0.4)"], // Assume in light mode, rgba(238, 133, 43, 0.4) in dark mode
 
   ["--salt-accent-foreground-disabled", "rgba(255, 255, 255, 0.4)"],
-  ["--salt-accent-background-disabled", "rgba(38, 112, 169, 0.4)"],
+  // ["--salt-accent-background-disabled", "rgba(38, 112, 169, 0.4)"], // Undeprecate in https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Ftheme%401.23.3
   [
     "--salt-accent-borderColor-disabled",
     "--salt-container-primary-borderColor-disabled",
