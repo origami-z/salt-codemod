@@ -1,6 +1,6 @@
 {
   "name": "salt-codemod",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Codemod to help upgrade Salt design system packages",
   "main": "index.js",
   "type": "module",
