@@ -1,5 +1,11 @@
 # salt-codemod
 
+## 0.1.0-alpha.4
+
+### Patch Changes
+
+- fadcafa: Move `@changesets/cli` to dev dependency
+
 ## 0.1.0-alpha.3
 
 ### Minor Changes
