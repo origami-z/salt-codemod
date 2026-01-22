@@ -1,6 +1,6 @@
 import { moveNamedImports } from "./utils.js";
 
-// Jan 22, 2026
+// Apr 4, 2024
 export function react1430(file) {
   // https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Fcore%401.43.0
   // https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Flab%401.0.0-alpha.39
