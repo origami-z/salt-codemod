@@ -28,6 +28,18 @@ import { react1320 } from "../migration/core1320";
 import { react1330 } from "../migration/core1330";
 import { react1360 } from "../migration/core1360";
 import { react1372 } from "../migration/core1372";
+import { react1380 } from "../migration/core1380";
+import { react1390 } from "../migration/core1390";
+import { react1400 } from "../migration/core1400";
+import { react1410 } from "../migration/core1410";
+import { react1420 } from "../migration/core1420";
+import { react1430 } from "../migration/core1430";
+import { react1440 } from "../migration/core1440";
+import { react1450 } from "../migration/core1450";
+import { react1460 } from "../migration/core1460";
+import { react1471 } from "../migration/core1471";
+import { react1480 } from "../migration/core1480";
+import { react1530 } from "../migration/core1530";
 
 /**
  *
@@ -182,5 +194,178 @@ describe("Smoke test all migration script will run", () => {
     const actualResultText = file.getText();
 
     expect(actualResultText.includes(`<CheckmarkIcon />`)).toBeTruthy();
+  });
+  test("react1380", () => {
+    react1380(file);
+  });
+  test("react1390", () => {
+    const file =
+      createFileWithContent(`import { SkipLink } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <SkipLink href="#main">Skip to main</SkipLink>
+    );
+  };`);
+    react1390(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1400", () => {
+    const file =
+      createFileWithContent(`import { CircularProgress, LinearProgress } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <>
+        <CircularProgress />
+        <LinearProgress value={50} />
+      </>
+    );
+  };`);
+    react1400(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1410", () => {
+    const file =
+      createFileWithContent(`import { Switch } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <Switch checked={true} />
+    );
+  };`);
+    react1410(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1420", () => {
+    const file =
+      createFileWithContent(`import { Dialog, Option } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <Dialog open={true}>
+        <Option value="1">Option 1</Option>
+      </Dialog>
+    );
+  };`);
+    react1420(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1430", () => {
+    const file =
+      createFileWithContent(`import { SegmentedButtonGroup, DialogHeader } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <>
+        <SegmentedButtonGroup />
+        <DialogHeader />
+      </>
+    );
+  };`);
+    react1430(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1440", () => {
+    const file =
+      createFileWithContent(`import { Slider, RangeSlider } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <>
+        <Slider min={0} max={100} />
+        <RangeSlider min={0} max={100} />
+      </>
+    );
+  };`);
+    react1440(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1450", () => {
+    const file =
+      createFileWithContent(`import { Stepper } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <Stepper />
+    );
+  };`);
+    react1450(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1460", () => {
+    const file =
+      createFileWithContent(`import { Overlay, OverlayTrigger } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <Overlay>
+        <OverlayTrigger />
+      </Overlay>
+    );
+  };`);
+    react1460(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1471", () => {
+    const file =
+      createFileWithContent(`import { Divider } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <Divider />
+    );
+  };`);
+    react1471(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1480", () => {
+    const file =
+      createFileWithContent(`import { Collapsible, VerticalNavigation } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <>
+        <Collapsible />
+        <VerticalNavigation />
+      </>
+    );
+  };`);
+    react1480(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1530", () => {
+    const file =
+      createFileWithContent(`import { NumberInput } from "@salt-ds/lab";
+  export const App = () => {
+    return (
+      <NumberInput value={42} />
+    );
+  };`);
+    react1530(file);
+
+    const actualResultText = file.getText();
+
+    expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
   });
 });
