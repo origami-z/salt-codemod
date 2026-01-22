@@ -16,9 +16,11 @@ export function react1450(file) {
   });
 
   // Rename SteppedTracker to Stepper if found
-  renameNamedImports(file, {
-    oldImportName: "SteppedTracker",
-    newImportName: "Stepper",
-    packageName: "@salt-ds/core",
-  });
+  for (const declaration of file.getImportDeclarations()) {
+    renameNamedImports(declaration, {
+      moduleSpecifier: "@salt-ds/core",
+      from: "SteppedTracker",
+      to: "Stepper",
+    });
+  }
 }
