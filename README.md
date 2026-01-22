@@ -22,6 +22,148 @@ Invalid CSS variables are extracted from `@salt-ds/theme/index.css`, which path 
 
 There is `--mode` option available if you just want to run React or CSS part of the codemod.
 
+## Supported Versions
+
+This codemod currently supports @salt-ds/core versions **1.0.0 through 1.54.2**.
+
+## Adding Support for New Versions
+
+To add support for newer @salt-ds versions, follow these steps:
+
+### 1. Update Version Constant
+Update `LATEST_SUPPORTED_VERSION` in `utils/args.js`:
+```javascript
+export const LATEST_SUPPORTED_VERSION = "1.XX.0";
+```
+
+### 2. Create Migration File
+Create a new migration file `migration/coreXXXX.js` (e.g., `core1540.js` for v1.54.0):
+```javascript
+import { moveNamedImports } from "./utils.js";
+
+// MMM DD, YYYY (use npm publish date)
+export function reactXXXX(file) {
+  // https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Fcore%40X.XX.0
+  // https://github.com/jpmorganchase/salt-ds/releases/tag/%40salt-ds%2Flab%40X.X.X-alpha.XX
+
+  // Component migrations (if any)
+  ["ComponentName", "ComponentNameProps"].forEach((x) => {
+    moveNamedImports(file, {
+      namedImportText: x,
+      from: "@salt-ds/lab",
+      to: "@salt-ds/core",
+    });
+  });
+}
+
+// CSS migrations (if any)
+export const cssXXXXRenameMap = [
+  ["--old-variable", "--new-variable"],
+];
+```
+
+**Getting the correct publish date:**
+```bash
+npm view @salt-ds/core@X.XX.0 time.X.XX.0
+```
+
+### 3. Update index.js
+
+Add imports:
+```javascript
+import { reactXXXX, cssXXXXRenameMap } from "./migration/coreXXXX.js";
+```
+
+Add version constant:
+```javascript
+const vXXXX = parse("X.XX.0");
+```
+
+Add React migration logic (around line 204-318):
+```javascript
+if (gt(vXXXX, fromVersion) && lte(vXXXX, toVersion)) {
+  reactXXXX(file);
+}
+```
+
+Add CSS migration logic (around line 377-415, if CSS changes exist):
+```javascript
+if (gt(vXXXX, fromVersion) && lte(vXXXX, toVersion)) {
+  cssMigrationMapArray.push(...cssXXXXRenameMap);
+}
+```
+
+### 4. Add Tests
+Add smoke tests in `__tests__/smoke.spec.js`:
+```javascript
+import { reactXXXX } from "../migration/coreXXXX";
+
+test("reactXXXX", () => {
+  const file = createFileWithContent(`import { Component } from "@salt-ds/lab";
+    export const App = () => <Component />;
+  `);
+  reactXXXX(file);
+  expect(file.getText().includes(`from "@salt-ds/core"`)).toBeTruthy();
+});
+```
+
+### 5. Create Changeset
+```bash
+npx changeset
+```
+Select "minor" and describe: "Supports upto @salt-ds/core@X.XX.0"
+
+### 6. Run Tests
+```bash
+npm test
+```
+
+## Key Migration Patterns
+
+### Moving Components from Lab to Core
+```javascript
+moveNamedImports(file, {
+  namedImportText: "ComponentName",
+  from: "@salt-ds/lab",
+  to: "@salt-ds/core",
+});
+```
+
+### Renaming Components
+```javascript
+for (const declaration of file.getImportDeclarations()) {
+  renameNamedImports(declaration, {
+    moduleSpecifier: "@salt-ds/core",
+    from: "OldName",
+    to: "NewName",
+  });
+}
+```
+
+### Replacing Props
+```javascript
+replaceReactAttribute(file, {
+  elementName: "Button",
+  attributeFrom: "variant",
+  valueFrom: `"cta"`,
+  attributeTo: "sentiment",
+  valueTo: `"accented"`,
+});
+```
+
+### CSS Variable Renames
+Theme package CSS variable changes are tracked separately. Check:
+```bash
+npm view @salt-ds/theme time --json | grep -E '"X\.XX\.0"'
+```
+
+## Resources
+
+- [Salt DS Releases](https://github.com/jpmorganchase/salt-ds/releases)
+- [Salt DS Core Changelog](https://github.com/jpmorganchase/salt-ds/blob/main/packages/core/CHANGELOG.md)
+- [Salt DS Lab Changelog](https://github.com/jpmorganchase/salt-ds/blob/main/packages/lab/CHANGELOG.md)
+- [Salt DS Theme Changelog](https://github.com/jpmorganchase/salt-ds/blob/main/packages/theme/CHANGELOG.md)
+
 ## Local development
 
 `yarn` to install all dependencies.

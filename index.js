@@ -55,6 +55,19 @@ import {
 import { react1372 } from "./migration/core1372.js";
 import { react1380 } from "./migration/core1380.js";
 import { react1390 } from "./migration/core1390.js";
+import { css1400RenameMap, react1400 } from "./migration/core1400.js";
+import { react1410 } from "./migration/core1410.js";
+import { react1420 } from "./migration/core1420.js";
+import { react1430 } from "./migration/core1430.js";
+import { react1440 } from "./migration/core1440.js";
+import { react1450 } from "./migration/core1450.js";
+import { react1460 } from "./migration/core1460.js";
+import { react1471 } from "./migration/core1471.js";
+import { react1480 } from "./migration/core1480.js";
+import { css1490RenameMap } from "./migration/core1490.js";
+import { css1500RenameMap } from "./migration/core1500.js";
+import { css1520RenameMap } from "./migration/core1520.js";
+import { react1530 } from "./migration/core1530.js";
 
 verboseOnlyLog("Args used:");
 verboseOnlyTableLog(parsedArgs);
@@ -117,6 +130,24 @@ const v1360 = parse("1.36.0");
 const v1372 = parse("1.37.2");
 const v1380 = parse("1.38.0");
 const v1390 = parse("1.39.0");
+const v1400 = parse("1.40.0");
+const v1410 = parse("1.41.0");
+const v1420 = parse("1.42.0");
+const v1430 = parse("1.43.0");
+const v1440 = parse("1.44.0");
+const v1450 = parse("1.45.0");
+const v1460 = parse("1.46.0");
+// nothing needed for 1.47.0
+const v1471 = parse("1.47.1");
+// nothing needed for 1.47.2, 1.47.3, 1.47.4, 1.47.5
+const v1480 = parse("1.48.0");
+const v1490 = parse("1.49.0");
+const v1500 = parse("1.50.0");
+// nothing needed for 1.51.0
+const v1520 = parse("1.52.0");
+// nothing needed for 1.52.1
+const v1530 = parse("1.53.0");
+// nothing needed for 1.54.0, 1.54.1, 1.54.2
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION` in args.js
 
 if (dryRun) {
@@ -317,6 +348,46 @@ if (mode === undefined || mode === "ts") {
       react1390(file);
     }
 
+    if (gt(v1400, fromVersion) && lte(v1400, toVersion)) {
+      react1400(file);
+    }
+
+    if (gt(v1410, fromVersion) && lte(v1410, toVersion)) {
+      react1410(file);
+    }
+
+    if (gt(v1420, fromVersion) && lte(v1420, toVersion)) {
+      react1420(file);
+    }
+
+    if (gt(v1430, fromVersion) && lte(v1430, toVersion)) {
+      react1430(file);
+    }
+
+    if (gt(v1440, fromVersion) && lte(v1440, toVersion)) {
+      react1440(file);
+    }
+
+    if (gt(v1450, fromVersion) && lte(v1450, toVersion)) {
+      react1450(file);
+    }
+
+    if (gt(v1460, fromVersion) && lte(v1460, toVersion)) {
+      react1460(file);
+    }
+
+    if (gt(v1471, fromVersion) && lte(v1471, toVersion)) {
+      react1471(file);
+    }
+
+    if (gt(v1480, fromVersion) && lte(v1480, toVersion)) {
+      react1480(file);
+    }
+
+    if (gt(v1530, fromVersion) && lte(v1530, toVersion)) {
+      react1530(file);
+    }
+
     if (organizeImports) {
       file.organizeImports();
     }
@@ -412,6 +483,22 @@ if (mode === undefined || mode === "css") {
 
   if (gt(v1360, fromVersion) && lte(v1360, toVersion)) {
     cssMigrationMapArray.push(...css1360RenameMap);
+  }
+
+  if (gt(v1400, fromVersion) && lte(v1400, toVersion)) {
+    cssMigrationMapArray.push(...css1400RenameMap);
+  }
+
+  if (gt(v1490, fromVersion) && lte(v1490, toVersion)) {
+    cssMigrationMapArray.push(...css1490RenameMap);
+  }
+
+  if (gt(v1500, fromVersion) && lte(v1500, toVersion)) {
+    cssMigrationMapArray.push(...css1500RenameMap);
+  }
+
+  if (gt(v1520, fromVersion) && lte(v1520, toVersion)) {
+    cssMigrationMapArray.push(...css1520RenameMap);
   }
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
