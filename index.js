@@ -88,6 +88,36 @@ const {
   cssModeGlob: cssGlob,
 } = parsedArgs;
 
+/**
+ * Detects if SaltProviderNext is imported in any of the source files
+ * @param {import('ts-morph').SourceFile[]} files - Array of source files to check
+ * @returns {boolean} True if SaltProviderNext is found, false otherwise
+ */
+function detectSaltProviderNext(files) {
+  for (const file of files) {
+    const importDeclarations = file.getImportDeclarations();
+    for (const importDecl of importDeclarations) {
+      const moduleSpecifier = importDecl.getModuleSpecifierValue();
+      if (
+        moduleSpecifier === "@salt-ds/core" ||
+        moduleSpecifier === "@salt-ds/lab"
+      ) {
+        const namedImports = importDecl.getNamedImports();
+        for (const namedImport of namedImports) {
+          if (namedImport.getName() === "SaltProviderNext") {
+            verboseOnlyLog(
+              "Detected SaltProviderNext in",
+              file.getFilePath()
+            );
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
 const v100 = parse("1.0.0");
 const v110 = parse("1.1.0");
 const v120 = parse("1.2.0");
@@ -431,31 +461,7 @@ if (mode === undefined || mode === "css") {
       }
 
       const detectionFiles = detectionProject.getSourceFiles();
-
-      for (const file of detectionFiles) {
-        const importDeclarations = file.getImportDeclarations();
-        for (const importDecl of importDeclarations) {
-          const moduleSpecifier = importDecl.getModuleSpecifierValue();
-          if (
-            moduleSpecifier === "@salt-ds/core" ||
-            moduleSpecifier === "@salt-ds/lab"
-          ) {
-            const namedImports = importDecl.getNamedImports();
-            for (const namedImport of namedImports) {
-              if (namedImport.getName() === "SaltProviderNext") {
-                usesSaltProviderNext = true;
-                verboseOnlyLog(
-                  "Detected SaltProviderNext in",
-                  file.getFilePath()
-                );
-                break;
-              }
-            }
-          }
-          if (usesSaltProviderNext) break;
-        }
-        if (usesSaltProviderNext) break;
-      }
+      usesSaltProviderNext = detectSaltProviderNext(detectionFiles);
     } catch (error) {
       verboseOnlyDimLog(
         "Could not check for SaltProviderNext usage:",
@@ -464,38 +470,7 @@ if (mode === undefined || mode === "css") {
     }
   } else if (sourceFiles.length > 0) {
     // Reuse the source files from TS mode
-    for (const file of sourceFiles) {
-      const importDeclarations = file.getImportDeclarations();
-      for (const importDecl of importDeclarations) {
-        const moduleSpecifier = importDecl.getModuleSpecifierValue();
-        if (
-          moduleSpecifier === "@salt-ds/core" ||
-          moduleSpecifier === "@salt-ds/lab"
-        ) {
-          const namedImports = importDecl.getNamedImports();
-          for (const namedImport of namedImports) {
-            if (namedImport.getName() === "SaltProviderNext") {
-              usesSaltProviderNext = true;
-              verboseOnlyLog(
-                "Detected SaltProviderNext in",
-                file.getFilePath()
-              );
-              break;
-            }
-          }
-        }
-        if (usesSaltProviderNext) break;
-      }
-      if (usesSaltProviderNext) break;
-    }
-  }
-
-  if (usesSaltProviderNext) {
-    console.log(
-      chalk.dim(
-        "Detected SaltProviderNext usage - will include theme-next.css variables"
-      )
-    );
+    usesSaltProviderNext = detectSaltProviderNext(sourceFiles);
   }
 
   verboseOnlyDimLog(
