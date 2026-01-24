@@ -38,6 +38,7 @@ import { css160RenameMap, react160 } from "./migration/core160.js";
 import { react180 } from "./migration/core180.js";
 import { css182RenameMap } from "./migration/core182.js";
 import {
+  detectSaltProviderNext,
   getCssRenameCheckRegex,
   migrateCssVar,
   warnUnknownSaltThemeVars,
@@ -87,36 +88,6 @@ const {
   themeNextCss,
   cssModeGlob: cssGlob,
 } = parsedArgs;
-
-/**
- * Detects if SaltProviderNext is imported in any of the source files
- * @param {import('ts-morph').SourceFile[]} files - Array of source files to check
- * @returns {boolean} True if SaltProviderNext is found, false otherwise
- */
-function detectSaltProviderNext(files) {
-  for (const file of files) {
-    const importDeclarations = file.getImportDeclarations();
-    for (const importDecl of importDeclarations) {
-      const moduleSpecifier = importDecl.getModuleSpecifierValue();
-      if (
-        moduleSpecifier === "@salt-ds/core" ||
-        moduleSpecifier === "@salt-ds/lab"
-      ) {
-        const namedImports = importDecl.getNamedImports();
-        for (const namedImport of namedImports) {
-          if (namedImport.getName() === "SaltProviderNext") {
-            verboseOnlyLog(
-              "Detected SaltProviderNext in",
-              file.getFilePath()
-            );
-            return true;
-          }
-        }
-      }
-    }
-  }
-  return false;
-}
 
 const v100 = parse("1.0.0");
 const v110 = parse("1.1.0");
