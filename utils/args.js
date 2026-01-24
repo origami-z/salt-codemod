@@ -79,6 +79,12 @@ export const parsedArgs = await yargs
     type: "boolean",
     description: `Skip check and upgrade all @salt-ds packages. Default to true in dryRun mode.`,
   })
+  .option("migrateFormControls", {
+    type: "boolean",
+    default: false,
+    description:
+      "Enable experimental migration of FormField from @salt-ds/lab to @salt-ds/core. Moves label and helperText props to child elements.",
+  })
   .wrap(yargs.terminalWidth())
   .help()
   .example(`$0 --from 1.30.0 --to 1.36.0 --tsSourceGlob "packages/**/*.ts*"`)
