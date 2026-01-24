@@ -7,6 +7,7 @@ import {
   renameReactElementName,
   replaceReactAttribute,
   migrateCssVar,
+  movePropToNewChildElement,
 } from "../../migration/utils.js";
 
 /**
@@ -419,5 +420,563 @@ describe("detectSaltProviderNext", () => {
     const actual = detectSaltProviderNext(sourceFiles);
 
     expect(actual).toBe(false);
+  });
+});
+
+describe("movePropToNewChildElement", () => {
+  describe("basic functionality", () => {
+    test("moves string literal prop to new child element", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>Name</FormFieldLabel>");
+      expect(result).not.toContain('label="Name"');
+      expect(result).toContain(`import { FormFieldLabel } from "@salt-ds/core";`);
+    });
+
+    test("moves JSX expression prop with variable to new child element", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+const labelText = "Name";
+export const App = () => {
+  return (
+    <FormField label={labelText}>
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>{labelText}</FormFieldLabel>");
+      expect(result).not.toContain("label={labelText}");
+    });
+
+    test("moves JSX expression prop with function call to new child element", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label={getLabel()}>
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>{getLabel()}</FormFieldLabel>");
+      expect(result).not.toContain("label={getLabel()}");
+    });
+
+    test("moves template literal prop to new child element", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+const name = "Field";
+export const App = () => {
+  return (
+    <FormField label={\`Enter \${name}\`}>
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>{`Enter ${name}`}</FormFieldLabel>");
+      expect(result).not.toContain("label={`Enter ${name}`}");
+    });
+  });
+
+  describe("import handling", () => {
+    test("adds import to existing declaration from same package", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+import { Button } from "@salt-ds/core";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain(`import { Button, FormFieldLabel } from "@salt-ds/core";`);
+    });
+
+    test("does not duplicate import if already present", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+import { FormFieldLabel } from "@salt-ds/core";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      // Count occurrences of FormFieldLabel import
+      const importMatches = result.match(/FormFieldLabel/g);
+      // Should appear once in import, once as opening tag, once as closing tag
+      expect(importMatches?.length).toBe(3);
+    });
+
+    test("creates new import declaration when package not imported", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain(`import { FormFieldLabel } from "@salt-ds/core";`);
+    });
+
+    test("works without newChildPackageName (no import added)", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>Name</FormFieldLabel>");
+      expect(result).not.toContain(`from "@salt-ds/core"`);
+    });
+  });
+
+  describe("component aliasing", () => {
+    test("handles aliased import correctly", () => {
+      const file = createFileWithContent(
+        `import { FormField as FF } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FF label="Name">
+      <input />
+    </FF>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      // The alias should be preserved
+      expect(result).toContain("<FF>");
+      expect(result).toContain("</FF>");
+      expect(result).toContain("<FormFieldLabel>Name</FormFieldLabel>");
+    });
+  });
+
+  describe("edge cases", () => {
+    test("does not modify component from different package", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@other-package/forms";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      const result = movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      expect(result).toBe(false);
+      expect(file.getText()).toContain('label="Name"');
+    });
+
+    test("does not modify when prop is not present", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField>
+      <input />
+    </FormField>
+  );
+};`
+      );
+      const result = movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      expect(result).toBe(false);
+      expect(file.getText()).not.toContain("FormFieldLabel");
+    });
+
+    test("handles multiple instances of the same component", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <div>
+      <FormField label="First">
+        <input />
+      </FormField>
+      <FormField label="Second">
+        <input />
+      </FormField>
+    </div>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>First</FormFieldLabel>");
+      expect(result).toContain("<FormFieldLabel>Second</FormFieldLabel>");
+      expect(result).not.toContain('label="First"');
+      expect(result).not.toContain('label="Second"');
+    });
+
+    test("preserves other props on the element", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label="Name" required disabled className="my-field">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("required");
+      expect(result).toContain("disabled");
+      expect(result).toContain('className="my-field"');
+      expect(result).not.toContain('label="Name"');
+    });
+
+    test("preserves existing children", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input type="text" />
+      <span>Helper</span>
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      // Note: TS AST transformation may strip space before />, so check for the key parts
+      expect(result).toContain('<input type="text"');
+      expect(result).toContain("<span>Helper</span>");
+      expect(result).toContain("<FormFieldLabel>Name</FormFieldLabel>");
+    });
+
+    test("returns false for missing required parameters", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+
+      expect(
+        movePropToNewChildElement(file, {
+          elementName: "FormField",
+          propName: "label",
+          newChildName: "FormFieldLabel",
+        })
+      ).toBe(false);
+
+      expect(
+        movePropToNewChildElement(file, {
+          packageName: "@salt-ds/lab",
+          propName: "label",
+          newChildName: "FormFieldLabel",
+        })
+      ).toBe(false);
+
+      expect(
+        movePropToNewChildElement(file, {
+          packageName: "@salt-ds/lab",
+          elementName: "FormField",
+          newChildName: "FormFieldLabel",
+        })
+      ).toBe(false);
+
+      expect(
+        movePropToNewChildElement(file, {
+          packageName: "@salt-ds/lab",
+          elementName: "FormField",
+          propName: "label",
+        })
+      ).toBe(false);
+    });
+
+    test("handles component with no import", () => {
+      const file = createFileWithContent(
+        `export const App = () => {
+  return (
+    <FormField label="Name">
+      <input />
+    </FormField>
+  );
+};`
+      );
+      const result = movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      expect(result).toBe(false);
+    });
+
+    test("handles JSX expression with object property access", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+const config = { label: "Name" };
+export const App = () => {
+  return (
+    <FormField label={config.label}>
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>{config.label}</FormFieldLabel>");
+    });
+
+    test("handles conditional expression in prop", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = ({ isRequired }) => {
+  return (
+    <FormField label={isRequired ? "Required Name" : "Name"}>
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain('<FormFieldLabel>{isRequired ? "Required Name" : "Name"}</FormFieldLabel>');
+    });
+
+    test("handles spread attributes on element", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+const props = { disabled: true };
+export const App = () => {
+  return (
+    <FormField label="Name" {...props}>
+      <input />
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>Name</FormFieldLabel>");
+      expect(result).toContain("{...props}");
+    });
+  });
+
+  describe("nested components", () => {
+    test("handles nested FormField components", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+
+export const App = () => {
+  return (
+    <FormField label="Outer">
+      <FormField label="Inner">
+        <input />
+      </FormField>
+    </FormField>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>Outer</FormFieldLabel>");
+      expect(result).toContain("<FormFieldLabel>Inner</FormFieldLabel>");
+    });
+
+    test("only transforms target component, not similarly named components", () => {
+      const file = createFileWithContent(
+        `import { FormField } from "@salt-ds/lab";
+import { CustomFormField } from "./custom";
+
+export const App = () => {
+  return (
+    <div>
+      <FormField label="Salt Field">
+        <input />
+      </FormField>
+      <CustomFormField label="Custom Field">
+        <input />
+      </CustomFormField>
+    </div>
+  );
+};`
+      );
+      movePropToNewChildElement(file, {
+        packageName: "@salt-ds/lab",
+        elementName: "FormField",
+        propName: "label",
+        newChildName: "FormFieldLabel",
+        newChildPackageName: "@salt-ds/core",
+      });
+      const result = file.getText();
+      expect(result).toContain("<FormFieldLabel>Salt Field</FormFieldLabel>");
+      expect(result).toContain('label="Custom Field"');
+    });
   });
 });
