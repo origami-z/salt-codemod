@@ -56,7 +56,11 @@ import {
   verboseOnlyDimLog,
   verboseOnlyTableLog,
   verboseOnlyLog,
+  infoLog,
+  errorLog,
+  warnLog,
 } from "./utils/log.js";
+import { applyMigrationIfInRange } from "./utils/migration-helpers.js";
 import { react1372 } from "./migration/core1372.js";
 import { react1380 } from "./migration/core1380.js";
 import { react1390 } from "./migration/core1390.js";
@@ -92,20 +96,6 @@ const {
   themeNextCss,
   cssModeGlob: cssGlob,
 } = parsedArgs;
-
-/**
- * Helper function to apply a migration if the version is in range.
- * @param {import("semver").SemVer} version - The version to check
- * @param {import("semver").SemVer} fromVersion - The starting version
- * @param {import("semver").SemVer} toVersion - The ending version
- * @param {Function} migrationFn - The migration function to execute
- * @param {*} context - The context to pass to the migration function
- */
-function applyMigrationIfInRange(version, fromVersion, toVersion, migrationFn, context) {
-  if (gt(version, fromVersion) && lte(version, toVersion)) {
-    migrationFn(context);
-  }
-}
 
 const v100 = parse("1.0.0");
 const v110 = parse("1.1.0");
@@ -171,7 +161,7 @@ const v1530 = parse("1.53.0");
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION` in args.js
 
 if (dryRun) {
-  console.log(chalk.bold("Dry run mode"));
+  infoLog(chalk.bold("Dry run mode"));
 }
 
 // <-------- Upgrade package.json version ---------->
@@ -195,8 +185,8 @@ if (!skipUpgrade || dryRun) {
       verboseOnlyDimLog("No @salt-ds/* package was upgraded");
     }
   } catch (error) {
-    console.error(chalk.red("Failed to upgrade packages:"), error.message);
-    console.log(chalk.yellow("Continuing with codemod using specified versions..."));
+    errorLog(chalk.red("Failed to upgrade packages:"), error.message);
+    infoLog(chalk.yellow("Continuing with codemod using specified versions..."));
   }
 }
 
@@ -204,7 +194,7 @@ const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
 const toVersion =
   parse(toInput) || parse(upgradedVersion) || parse(LATEST_SUPPORTED_VERSION);
 
-console.log(
+infoLog(
   "Running codemod from version",
   chalk.bold(fromVersion.format()),
   "to version",
@@ -236,13 +226,13 @@ if (mode === undefined || mode === "ts") {
     tsConfigFilePath: initialiseFromTsConfig ? tsconfig : undefined,
   });
 
-  // console.log(project);
+  // infoLog(project);
 
   if (initialiseFromTsConfig) {
-    console.log(chalk.dim("Initialising TypeScript project from", tsconfig));
+    infoLog(chalk.dim("Initialising TypeScript project from", tsconfig));
     // project.addSourceFilesFromTsConfig();
   } else {
-    console.log(
+    infoLog(
       chalk.dim(
         "Initialising TypeScript project from source glob:",
         tsSourceGlob,
@@ -254,7 +244,7 @@ if (mode === undefined || mode === "ts") {
   }
 
   sourceFiles = project.getSourceFiles();
-  console.log(chalk.dim("Found", sourceFiles.length, "source files"));
+  infoLog(chalk.dim("Found", sourceFiles.length, "source files"));
 
   for (const file of sourceFiles) {
     const filePath = file.getFilePath();
@@ -433,7 +423,7 @@ if (mode === undefined || mode === "ts") {
     await project.save();
   }
 
-  console.log(chalk.dim("TypeScript conversion done."));
+  infoLog(chalk.dim("TypeScript conversion done."));
 }
 
 // ============================================================================
@@ -443,7 +433,7 @@ if (mode === undefined || mode === "ts") {
 // CSS, TypeScript, and TSX files.
 
 if (mode === undefined || mode === "css") {
-  console.log(chalk.dim("Starting CSS variable migrations"));
+  infoLog(chalk.dim("Starting CSS variable migrations"));
 
   // Detect if SaltProviderNext is being used in the codebase
   let usesSaltProviderNext = false;
@@ -518,14 +508,14 @@ if (mode === undefined || mode === "css") {
       allSaltThemeCssVars.size
     );
   } catch (error) {
-    console.error(
+    errorLog(
       chalk.yellow("Warning: Could not read theme CSS file:"),
       error.message
     );
-    console.log(chalk.yellow("CSS variable validation will be skipped."));
+    infoLog(chalk.yellow("CSS variable validation will be skipped."));
   }
 
-  console.log(
+  infoLog(
     chalk.dim(
       "Scanning CSS using source glob:",
       cssGlob,
@@ -652,11 +642,11 @@ if (mode === undefined || mode === "css") {
         verboseOnlyDimLog("Writing new", filePath);
       }
     } catch (error) {
-      console.error(chalk.red(`Failed to process ${filePath}:`), error.message);
+      errorLog(chalk.red(`Failed to process ${filePath}:`), error.message);
     }
   }
 
-  console.log(chalk.dim("CSS variable migrations done."));
+  infoLog(chalk.dim("CSS variable migrations done."));
 }
 
 // ============================================================================
@@ -664,8 +654,8 @@ if (mode === undefined || mode === "css") {
 // ============================================================================
 
 if (dryRun) {
-  console.log(chalk.bold.cyan("Dry run mode complete!"));
-  console.log(chalk.dim("No files were modified. Remove --dryRun to apply changes."));
+  infoLog(chalk.bold.cyan("Dry run mode complete!"));
+  infoLog(chalk.dim("No files were modified. Remove --dryRun to apply changes."));
 } else {
-  console.log(chalk.bold.green("All migrations complete!"));
+  infoLog(chalk.bold.green("All migrations complete!"));
 }

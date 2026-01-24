@@ -1,5 +1,5 @@
 import { SyntaxKind, Node } from "ts-morph";
-import { verboseOnlyDimLog, verboseOnlyLog } from "../utils/log.js";
+import { verboseOnlyDimLog, verboseOnlyLog, warnLog, errorLog } from "../utils/log.js";
 import process from "process";
 import { relative } from "path";
 
@@ -37,7 +37,7 @@ export function renameImportModuleSpecifier(
   { from, to, partial = false }
 ) {
   if (!from || !to) {
-    console.warn("renameImportModuleSpecifier: 'from' and 'to' parameters are required");
+    warnLog("renameImportModuleSpecifier: 'from' and 'to' parameters are required");
     return false;
   }
 
@@ -88,7 +88,7 @@ export function renameImportModuleSpecifier(
  */
 export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
   if (!moduleSpecifier || !from || !to) {
-    console.warn("renameNamedImports: 'moduleSpecifier', 'from', and 'to' parameters are required");
+    warnLog("renameNamedImports: 'moduleSpecifier', 'from', and 'to' parameters are required");
     return false;
   }
 
@@ -157,7 +157,7 @@ export function renameNamedImports(declaration, { moduleSpecifier, from, to }) {
  */
 export function moveNamedImports(file, { namedImportText, from, to, newName }) {
   if (!namedImportText || !from || !to) {
-    console.warn("moveNamedImports: 'namedImportText', 'from', and 'to' parameters are required");
+    warnLog("moveNamedImports: 'namedImportText', 'from', and 'to' parameters are required");
     return false;
   }
 
@@ -321,12 +321,12 @@ export function replaceReactAttribute(
   }
 ) {
   if (!elementName || !attributeFrom || !attributeTo) {
-    console.warn("replaceReactAttribute: 'elementName', 'attributeFrom', and 'attributeTo' are required");
+    warnLog("replaceReactAttribute: 'elementName', 'attributeFrom', and 'attributeTo' are required");
     return false;
   }
 
   if (valueFrom !== undefined && valueTo === undefined) {
-    console.warn("replaceReactAttribute: 'valueTo' is required when 'valueFrom' is specified");
+    warnLog("replaceReactAttribute: 'valueTo' is required when 'valueFrom' is specified");
     return false;
   }
 
@@ -439,7 +439,7 @@ export function warnRemovedReactAttribute(
   { elementName, allAttributesRemoved }
 ) {
   if (!elementName || !allAttributesRemoved) {
-    console.warn("warnRemovedReactAttribute: 'elementName' and 'allAttributesRemoved' are required");
+    warnLog("warnRemovedReactAttribute: 'elementName' and 'allAttributesRemoved' are required");
     return;
   }
 
@@ -461,7 +461,7 @@ export function warnRemovedReactAttribute(
 
         const attributeText = firstDescendant.getText();
         if (allAttributesRemoved.has(attributeText)) {
-          console.error(
+          errorLog(
             `Error: removed prop \`${attributeText}\` of`,
             elementName,
             "component detected at",
@@ -509,7 +509,7 @@ export function warnUnknownSaltThemeVars(
     // Only validate variables with full "--salt-" prefix
     // Component CSS could be matched without the trailing "-"
     if (varUsed.startsWith("--salt-") && !validCssVarsSet.has(varUsed)) {
-      console.error(
+      errorLog(
         "Error: unknown salt css variable",
         varUsed,
         "at",
@@ -574,7 +574,7 @@ export function migrateCssVar(line, renameRegex, renameMap) {
   return line.replaceAll(renameRegex, (match) => {
     const to = renameMap.get(match);
     if (!to) {
-      console.warn(`migrateCssVar: No mapping found for ${match}`);
+      warnLog(`migrateCssVar: No mapping found for ${match}`);
       return match;
     }
     verboseOnlyLog("Replace css var", match, "to", to);
