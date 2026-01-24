@@ -18,3 +18,16 @@ export function verboseOnlyBoldLog(...data) {
 export function verboseOnlyTableLog(...data) {
   (verbose || dryRun) && console.table(...data);
 }
+
+// Always-shown log utilities
+export function infoLog(...data) {
+  console.log(...data);
+}
+
+export function errorLog(...data) {
+  console.error(...data);
+}
+
+export function warnLog(...data) {
+  console.warn(...data);
+}

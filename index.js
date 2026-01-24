@@ -8,6 +8,10 @@ import { relative } from "path";
 import process from "process";
 import { coerce, gt, lte, parse } from "semver";
 import { Project } from "ts-morph";
+
+// Constants
+const CSS_IGNORE_FOLDERS = ["node_modules", "dist", "build"];
+const SALT_DS_PACKAGE_FILTER = /@salt-ds/;
 import { css100RenameMap, react100 } from "./migration/core100.js";
 import { react110 } from "./migration/core110.js";
 import { react1110 } from "./migration/core1110.js";
@@ -52,7 +56,11 @@ import {
   verboseOnlyDimLog,
   verboseOnlyTableLog,
   verboseOnlyLog,
+  infoLog,
+  errorLog,
+  warnLog,
 } from "./utils/log.js";
+import { applyMigrationIfInRange } from "./utils/migration-helpers.js";
 import { react1372 } from "./migration/core1372.js";
 import { react1380 } from "./migration/core1380.js";
 import { react1390 } from "./migration/core1390.js";
@@ -153,7 +161,7 @@ const v1530 = parse("1.53.0");
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION` in args.js
 
 if (dryRun) {
-  console.log(chalk.bold("Dry run mode"));
+  infoLog(chalk.bold("Dry run mode"));
 }
 
 // <-------- Upgrade package.json version ---------->
@@ -161,19 +169,24 @@ if (dryRun) {
 let upgradedVersion = undefined;
 
 if (!skipUpgrade || dryRun) {
-  const upgraded = await ncu.run({
-    upgrade: true,
-    filter: new RegExp("@salt-ds"),
-    install: "always",
-    // Logging is not supported in json mode - https://github.com/raineorshine/npm-check-updates/blob/982bd407dd46ec4f8173ed867f117e4d45686981/src/lib/logging.ts#L53-L70
-  });
+  try {
+    const upgraded = await ncu.run({
+      upgrade: true,
+      filter: SALT_DS_PACKAGE_FILTER,
+      install: "always",
+      // Logging is not supported in json mode - https://github.com/raineorshine/npm-check-updates/blob/982bd407dd46ec4f8173ed867f117e4d45686981/src/lib/logging.ts#L53-L70
+    });
 
-  if (Object.entries(upgraded).length) {
-    verboseOnlyDimLog("Package upgraded to ", JSON.stringify(upgraded)); // { '@salt-ds/core': '^1.37.1', ... }
-    const newCoreRange = upgraded["@salt-ds/core"];
-    upgradedVersion = coerce(newCoreRange)?.version;
-  } else {
-    verboseOnlyDimLog("No @salt-ds/* package was upgraded");
+    if (Object.entries(upgraded).length) {
+      verboseOnlyDimLog("Package upgraded to ", JSON.stringify(upgraded)); // { '@salt-ds/core': '^1.37.1', ... }
+      const newCoreRange = upgraded["@salt-ds/core"];
+      upgradedVersion = coerce(newCoreRange)?.version;
+    } else {
+      verboseOnlyDimLog("No @salt-ds/* package was upgraded");
+    }
+  } catch (error) {
+    errorLog(chalk.red("Failed to upgrade packages:"), error.message);
+    infoLog(chalk.yellow("Continuing with codemod using specified versions..."));
   }
 }
 
@@ -181,14 +194,18 @@ const fromVersion = parse(fromInput) || parse(DEFAULT_FROM_VERSION);
 const toVersion =
   parse(toInput) || parse(upgradedVersion) || parse(LATEST_SUPPORTED_VERSION);
 
-console.log(
+infoLog(
   "Running codemod from version",
   chalk.bold(fromVersion.format()),
   "to version",
   chalk.bold(toVersion.format())
 );
 
-// <-------- TS Code ---------->
+// ============================================================================
+// TypeScript/React Migrations
+// ============================================================================
+// This section handles all React component and TypeScript code migrations
+// using ts-morph to parse and transform source files.
 
 // Keep track of project and source files for SaltProviderNext detection
 let project = null;
@@ -209,13 +226,13 @@ if (mode === undefined || mode === "ts") {
     tsConfigFilePath: initialiseFromTsConfig ? tsconfig : undefined,
   });
 
-  // console.log(project);
+  // infoLog(project);
 
   if (initialiseFromTsConfig) {
-    console.log(chalk.dim("Initialising TypeScript project from", tsconfig));
+    infoLog(chalk.dim("Initialising TypeScript project from", tsconfig));
     // project.addSourceFilesFromTsConfig();
   } else {
-    console.log(
+    infoLog(
       chalk.dim(
         "Initialising TypeScript project from source glob:",
         tsSourceGlob,
@@ -227,7 +244,7 @@ if (mode === undefined || mode === "ts") {
   }
 
   sourceFiles = project.getSourceFiles();
-  console.log(chalk.dim("Found", sourceFiles.length, "source files"));
+  infoLog(chalk.dim("Found", sourceFiles.length, "source files"));
 
   for (const file of sourceFiles) {
     const filePath = file.getFilePath();
@@ -406,13 +423,17 @@ if (mode === undefined || mode === "ts") {
     await project.save();
   }
 
-  console.log(chalk.dim("TypeScript conversion done."));
+  infoLog(chalk.dim("TypeScript conversion done."));
 }
 
-// <-------- CSS Var ---------->
+// ============================================================================
+// CSS Variable Migrations
+// ============================================================================
+// This section handles CSS variable renames and validations across
+// CSS, TypeScript, and TSX files.
 
 if (mode === undefined || mode === "css") {
-  console.log(chalk.dim("Starting CSS variable migrations"));
+  infoLog(chalk.dim("Starting CSS variable migrations"));
 
   // Detect if SaltProviderNext is being used in the codebase
   let usesSaltProviderNext = false;
@@ -448,53 +469,62 @@ if (mode === undefined || mode === "css") {
     "Reading Salt theme CSS variables from",
     relative(process.cwd(), themeCss)
   );
-  const saltThemeCssContent = readFileSync(themeCss, {
-    encoding: "utf8",
-    flag: "r",
-  });
-  const allSaltThemeCssVars = new Set(
-    [...saltThemeCssContent.matchAll(/--salt[-\w]+\b/g)].map((x) => x[0])
-  );
 
-  // If SaltProviderNext is detected and theme-next.css exists, also load its variables
-  if (usesSaltProviderNext && existsSync(themeNextCss)) {
-    verboseOnlyDimLog(
-      "Reading additional Salt theme CSS variables from",
-      relative(process.cwd(), themeNextCss)
-    );
-    const saltThemeNextCssContent = readFileSync(themeNextCss, {
+  let allSaltThemeCssVars = new Set();
+  try {
+    const saltThemeCssContent = readFileSync(themeCss, {
       encoding: "utf8",
       flag: "r",
     });
-    const themeNextVars = [
-      ...saltThemeNextCssContent.matchAll(/--salt[-\w]+\b/g),
-    ].map((x) => x[0]);
+    allSaltThemeCssVars = new Set(
+      [...saltThemeCssContent.matchAll(/--salt[-\w]+\b/g)].map((x) => x[0])
+    );
 
-    themeNextVars.forEach((cssVar) => allSaltThemeCssVars.add(cssVar));
+    // If SaltProviderNext is detected and theme-next.css exists, also load its variables
+    if (usesSaltProviderNext && existsSync(themeNextCss)) {
+      verboseOnlyDimLog(
+        "Reading additional Salt theme CSS variables from",
+        relative(process.cwd(), themeNextCss)
+      );
+      const saltThemeNextCssContent = readFileSync(themeNextCss, {
+        encoding: "utf8",
+        flag: "r",
+      });
+      const themeNextVars = [
+        ...saltThemeNextCssContent.matchAll(/--salt[-\w]+\b/g),
+      ].map((x) => x[0]);
+
+      themeNextVars.forEach((cssVar) => allSaltThemeCssVars.add(cssVar));
+
+      verboseOnlyDimLog(
+        "Added",
+        themeNextVars.length,
+        "variables from theme-next.css"
+      );
+    }
 
     verboseOnlyDimLog(
-      "Added",
-      themeNextVars.length,
-      "variables from theme-next.css"
+      "Total valid Salt theme CSS var count:",
+      allSaltThemeCssVars.size
     );
+  } catch (error) {
+    errorLog(
+      chalk.yellow("Warning: Could not read theme CSS file:"),
+      error.message
+    );
+    infoLog(chalk.yellow("CSS variable validation will be skipped."));
   }
 
-  verboseOnlyDimLog(
-    "Total valid Salt theme CSS var count:",
-    allSaltThemeCssVars.size
-  );
-
-  const cssIgnoreFolders = ["node_modules", "dist", "build"];
-  console.log(
+  infoLog(
     chalk.dim(
       "Scanning CSS using source glob:",
       cssGlob,
       ", ignoring folders:",
-      cssIgnoreFolders
+      CSS_IGNORE_FOLDERS
     )
   );
   const filePaths = glob.sync(cssGlob, {
-    ignore: cssIgnoreFolders,
+    ignore: CSS_IGNORE_FOLDERS,
   });
 
   verboseOnlyDimLog(
@@ -502,7 +532,7 @@ if (mode === undefined || mode === "css") {
     filePaths.length
   );
 
-  /** A array of css variable to move from version a to b. */
+  // Collect all CSS variable migrations that apply to the version range
   const cssMigrationMapArray = [];
 
   if (gt(v100, fromVersion) && lte(v100, toVersion)) {
@@ -572,47 +602,60 @@ if (mode === undefined || mode === "css") {
     }
     verboseOnlyDimLog("Processing", filePath);
 
-    const originalContent = readFileSync(filePath, {
-      encoding: "utf-8",
-      flag: "r",
-    });
+    try {
+      const originalContent = readFileSync(filePath, {
+        encoding: "utf-8",
+        flag: "r",
+      });
 
-    const newContent = originalContent
-      .split(/\r?\n|\r|\n/g)
-      .map((line, lineIndex) => {
-        let newLine = line;
+      const newContent = originalContent
+        .split(/\r?\n|\r|\n/g)
+        .map((line, lineIndex) => {
+          let newLine = line;
 
-        if (cssMigrationMap.size > 0) {
-          newLine = migrateCssVar(
-            // Replace uitk prefix with salt prefix for pre-1.0.0 migration
-            gt(v100, fromVersion) ? line : line.replace(/--uitk/g, "--salt"),
-            knownCssRenameCheckRegex,
-            cssMigrationMap
+          if (cssMigrationMap.size > 0) {
+            // Apply uitk -> salt prefix migration for pre-1.0.0
+            const lineToMigrate = gt(v100, fromVersion)
+              ? line
+              : line.replace(/--uitk/g, "--salt");
+
+            newLine = migrateCssVar(
+              lineToMigrate,
+              knownCssRenameCheckRegex,
+              cssMigrationMap
+            );
+          }
+
+          warnUnknownSaltThemeVars(
+            allSaltThemeCssVars,
+            newLine,
+            lineIndex,
+            filePath
           );
-        }
 
-        warnUnknownSaltThemeVars(
-          allSaltThemeCssVars,
-          newLine,
-          lineIndex,
-          filePath
-        );
+          return newLine;
+        })
+        .join("\n");
 
-        return newLine;
-      })
-      .join("\n");
-
-    if (newContent !== originalContent && !dryRun) {
-      writeFileSync(filePath, newContent, { encoding: "utf-8" });
-      verboseOnlyDimLog("Writing new", filePath);
+      if (newContent !== originalContent && !dryRun) {
+        writeFileSync(filePath, newContent, { encoding: "utf-8" });
+        verboseOnlyDimLog("Writing new", filePath);
+      }
+    } catch (error) {
+      errorLog(chalk.red(`Failed to process ${filePath}:`), error.message);
     }
   }
 
-  console.log(chalk.dim("CSS variable migrations done."));
+  infoLog(chalk.dim("CSS variable migrations done."));
 }
 
+// ============================================================================
+// Completion
+// ============================================================================
+
 if (dryRun) {
-  console.log("Dry run mode done!");
+  infoLog(chalk.bold.cyan("Dry run mode complete!"));
+  infoLog(chalk.dim("No files were modified. Remove --dryRun to apply changes."));
 } else {
-  console.log("All done!");
+  infoLog(chalk.bold.green("All migrations complete!"));
 }
