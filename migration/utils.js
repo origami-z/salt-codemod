@@ -359,3 +359,33 @@ export function migrateCssVar(line, renameRegex, renameMap) {
     return to;
   });
 }
+
+/**
+ * Detects if SaltProviderNext is imported in any of the source files
+ * @param {import('ts-morph').SourceFile[]} files - Array of source files to check
+ * @returns {boolean} True if SaltProviderNext is found, false otherwise
+ */
+export function detectSaltProviderNext(files) {
+  for (const file of files) {
+    const importDeclarations = file.getImportDeclarations();
+    for (const importDecl of importDeclarations) {
+      const moduleSpecifier = importDecl.getModuleSpecifierValue();
+      if (
+        moduleSpecifier === "@salt-ds/core" ||
+        moduleSpecifier === "@salt-ds/lab"
+      ) {
+        const namedImports = importDecl.getNamedImports();
+        for (const namedImport of namedImports) {
+          if (namedImport.getName() === "SaltProviderNext") {
+            verboseOnlyLog(
+              "Detected SaltProviderNext in",
+              file.getFilePath()
+            );
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}

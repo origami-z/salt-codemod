@@ -26,6 +26,12 @@ export const parsedArgs = await yargs
     description:
       "Custom path for `@salt-ds/theme/index.css` file used in CSS mode.",
   })
+  .option("themeNextCss", {
+    type: "string",
+    default: "node_modules/@salt-ds/theme/theme-next.css",
+    description:
+      "Custom path for `@salt-ds/theme/theme-next.css` file used in CSS mode when SaltProviderNext is detected.",
+  })
   .option("cssModeGlob", {
     type: "string",
     default: "*/**/*.@(css|ts|tsx)",

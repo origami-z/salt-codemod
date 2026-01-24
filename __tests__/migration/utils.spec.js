@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import * as tsm from "ts-morph";
 import {
+  detectSaltProviderNext,
   getCssRenameCheckRegex,
   moveNamedImports,
   renameReactElementName,
@@ -288,5 +289,135 @@ describe("replaceReactAttribute", () => {
     });
     const actualResultText = file.getText();
     expect(actualResultText).toContain(`<ComponentTWO prop2="b">`);
+  });
+});
+
+describe("detectSaltProviderNext", () => {
+  test("detects SaltProviderNext from @salt-ds/core", () => {
+    const file = createFileWithContent(
+      `import { SaltProvider, SaltProviderNext } from "@salt-ds/core";
+
+  export const App = () => {
+    return (
+      <SaltProviderNext>
+        <div>Hello</div>
+      </SaltProviderNext>
+    );
+  };`
+    );
+
+    const project = file.getProject();
+    const sourceFiles = project.getSourceFiles();
+    const actual = detectSaltProviderNext(sourceFiles);
+
+    expect(actual).toBe(true);
+  });
+
+  test("detects SaltProviderNext from @salt-ds/lab", () => {
+    const file = createFileWithContent(
+      `import { SaltProviderNext } from "@salt-ds/lab";
+
+  export const App = () => {
+    return (
+      <SaltProviderNext>
+        <div>Hello</div>
+      </SaltProviderNext>
+    );
+  };`
+    );
+
+    const project = file.getProject();
+    const sourceFiles = project.getSourceFiles();
+    const actual = detectSaltProviderNext(sourceFiles);
+
+    expect(actual).toBe(true);
+  });
+
+  test("returns false when only SaltProvider is imported", () => {
+    const file = createFileWithContent(
+      `import { SaltProvider } from "@salt-ds/core";
+
+  export const App = () => {
+    return (
+      <SaltProvider>
+        <div>Hello</div>
+      </SaltProvider>
+    );
+  };`
+    );
+
+    const project = file.getProject();
+    const sourceFiles = project.getSourceFiles();
+    const actual = detectSaltProviderNext(sourceFiles);
+
+    expect(actual).toBe(false);
+  });
+
+  test("returns false when no salt-ds imports exist", () => {
+    const file = createFileWithContent(
+      `import React from "react";
+
+  export const App = () => {
+    return <div>Hello</div>;
+  };`
+    );
+
+    const project = file.getProject();
+    const sourceFiles = project.getSourceFiles();
+    const actual = detectSaltProviderNext(sourceFiles);
+
+    expect(actual).toBe(false);
+  });
+
+  test("returns false for empty source files array", () => {
+    const actual = detectSaltProviderNext([]);
+    expect(actual).toBe(false);
+  });
+
+  test("detects SaltProviderNext in multiple files", () => {
+    const project = new tsm.Project({ useInMemoryFileSystem: true });
+
+    project.createSourceFile(
+      "file1.tsx",
+      `import { Button } from "@salt-ds/core";
+
+  export const Component1 = () => <Button>Click</Button>;`
+    );
+
+    project.createSourceFile(
+      "file2.tsx",
+      `import { SaltProviderNext } from "@salt-ds/core";
+
+  export const Component2 = () => (
+    <SaltProviderNext>
+      <div>Content</div>
+    </SaltProviderNext>
+  );`
+    );
+
+    const sourceFiles = project.getSourceFiles();
+    const actual = detectSaltProviderNext(sourceFiles);
+
+    expect(actual).toBe(true);
+  });
+
+  test("returns false when SaltProviderNext is from different package", () => {
+    const file = createFileWithContent(
+      `import { SaltProviderNext } from "some-other-package";
+
+  export const App = () => {
+    return (
+      <SaltProviderNext>
+        <div>Hello</div>
+      </SaltProviderNext>
+    );
+  };`
+    );
+
+    const project = file.getProject();
+    const sourceFiles = project.getSourceFiles();
+    const actual = detectSaltProviderNext(sourceFiles);
+
+    expect(actual).toBe(false);
   });
 });

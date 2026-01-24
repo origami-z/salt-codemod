@@ -38,6 +38,7 @@ import { css160RenameMap, react160 } from "./migration/core160.js";
 import { react180 } from "./migration/core180.js";
 import { css182RenameMap } from "./migration/core182.js";
 import {
+  detectSaltProviderNext,
   getCssRenameCheckRegex,
   migrateCssVar,
   warnUnknownSaltThemeVars,
@@ -84,6 +85,7 @@ const {
   to: toInput,
   skipUpgrade,
   themeCss,
+  themeNextCss,
   cssModeGlob: cssGlob,
 } = parsedArgs;
 
@@ -188,6 +190,10 @@ console.log(
 
 // <-------- TS Code ---------->
 
+// Keep track of project and source files for SaltProviderNext detection
+let project = null;
+let sourceFiles = [];
+
 if (mode === undefined || mode === "ts") {
   // Check, in case of monorepo which doesn't have tsconfig at the root
   const tsConfigExisted = existsSync(tsconfig);
@@ -195,7 +201,7 @@ if (mode === undefined || mode === "ts") {
   // Ignore tsconfig if `tsSourceGlob` option is provided
   const initialiseFromTsConfig = !tsSourceGlob && tsConfigExisted;
 
-  const project = new Project({
+  project = new Project({
     // Optionally specify compiler options, tsconfig.json, in-memory file system, and more here.
     // If you initialize with a tsconfig.json, then it will automatically populate the project
     // with the associated source files.
@@ -220,7 +226,7 @@ if (mode === undefined || mode === "ts") {
     project.addSourceFilesAtPaths(tsSourceGlob);
   }
 
-  const sourceFiles = project.getSourceFiles();
+  sourceFiles = project.getSourceFiles();
   console.log(chalk.dim("Found", sourceFiles.length, "source files"));
 
   for (const file of sourceFiles) {
@@ -408,6 +414,36 @@ if (mode === undefined || mode === "ts") {
 if (mode === undefined || mode === "css") {
   console.log(chalk.dim("Starting CSS variable migrations"));
 
+  // Detect if SaltProviderNext is being used in the codebase
+  let usesSaltProviderNext = false;
+
+  // If we didn't run TS mode, we need to create a project just for detection
+  if (mode === "css") {
+    try {
+      const tsConfigExisted = existsSync(tsconfig);
+      const initialiseFromTsConfig = !tsSourceGlob && tsConfigExisted;
+
+      const detectionProject = new Project({
+        tsConfigFilePath: initialiseFromTsConfig ? tsconfig : undefined,
+      });
+
+      if (!initialiseFromTsConfig && tsSourceGlob) {
+        detectionProject.addSourceFilesAtPaths(tsSourceGlob);
+      }
+
+      const detectionFiles = detectionProject.getSourceFiles();
+      usesSaltProviderNext = detectSaltProviderNext(detectionFiles);
+    } catch (error) {
+      verboseOnlyDimLog(
+        "Could not check for SaltProviderNext usage:",
+        error.message
+      );
+    }
+  } else if (sourceFiles.length > 0) {
+    // Reuse the source files from TS mode
+    usesSaltProviderNext = detectSaltProviderNext(sourceFiles);
+  }
+
   verboseOnlyDimLog(
     "Reading Salt theme CSS variables from",
     relative(process.cwd(), themeCss)
@@ -419,6 +455,30 @@ if (mode === undefined || mode === "css") {
   const allSaltThemeCssVars = new Set(
     [...saltThemeCssContent.matchAll(/--salt[-\w]+\b/g)].map((x) => x[0])
   );
+
+  // If SaltProviderNext is detected and theme-next.css exists, also load its variables
+  if (usesSaltProviderNext && existsSync(themeNextCss)) {
+    verboseOnlyDimLog(
+      "Reading additional Salt theme CSS variables from",
+      relative(process.cwd(), themeNextCss)
+    );
+    const saltThemeNextCssContent = readFileSync(themeNextCss, {
+      encoding: "utf8",
+      flag: "r",
+    });
+    const themeNextVars = [
+      ...saltThemeNextCssContent.matchAll(/--salt[-\w]+\b/g),
+    ].map((x) => x[0]);
+
+    themeNextVars.forEach((cssVar) => allSaltThemeCssVars.add(cssVar));
+
+    verboseOnlyDimLog(
+      "Added",
+      themeNextVars.length,
+      "variables from theme-next.css"
+    );
+  }
+
   verboseOnlyDimLog(
     "Total valid Salt theme CSS var count:",
     allSaltThemeCssVars.size
