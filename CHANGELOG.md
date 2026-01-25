@@ -1,5 +1,21 @@
 # salt-codemod
 
+## 0.1.0-alpha.5
+
+### Minor Changes
+
+- 4d243d5: Add --migrateFormControls CLI flag for experimental FormField migration
+
+  - Adds `movePropToNewChildElement` utility function to migrate JSX props to child elements
+  - Adds `formControls` migration to transform FormField from @salt-ds/lab to @salt-ds/core
+    - Moves `label` prop to `<FormFieldLabel>` child element
+    - Moves `helperText` prop to `<FormFieldHelperText>` child element
+    - Migrates FormField import from @salt-ds/lab to @salt-ds/core
+  - Feature is off by default, enable with `--migrateFormControls` flag
+
+- 6357671: Supports upto @salt-ds/core@1.54.2
+- 35ca1ad: Support CSS variable validation from theme-next.css when SaltProviderNext is detected in the codebase. This prevents false errors for variables defined in theme-next.css.
+
 ## 0.1.0-alpha.4
 
 ### Patch Changes
