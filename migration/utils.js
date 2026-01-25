@@ -1,4 +1,4 @@
-import { SyntaxKind, Node } from "ts-morph";
+import { SyntaxKind, Node, ts } from "ts-morph";
 import { verboseOnlyDimLog, verboseOnlyLog, warnLog, errorLog } from "../utils/log.js";
 import process from "process";
 import { relative } from "path";
@@ -610,4 +610,253 @@ export function detectSaltProviderNext(files) {
     }
   }
   return false;
+}
+
+/**
+ * @typedef {Object} MovePropToNewChildElementOption
+ * @property {string} packageName - The package name where the component is imported from
+ * @property {string} elementName - The component name to modify
+ * @property {string} propName - The prop name to move to a child element
+ * @property {string} newChildName - The name of the new child element
+ * @property {string} [newChildPackageName] - Optional package name for the new child import
+ */
+
+/**
+ * Move a prop value from a component to a new child element.
+ * For example, transforms `<FormField label="Name">` to `<FormField><FormFieldLabel>Name</FormFieldLabel>`.
+ *
+ * @param {import("ts-morph").SourceFile} file - The source file to modify
+ * @param {MovePropToNewChildElementOption} options - Options for the transformation
+ * @returns {boolean} True if the transformation was applied, false otherwise
+ *
+ * @example
+ * movePropToNewChildElement(file, {
+ *   packageName: "@salt-ds/lab",
+ *   elementName: "FormField",
+ *   propName: "label",
+ *   newChildName: "FormFieldLabel",
+ *   newChildPackageName: "@salt-ds/core"
+ * });
+ */
+export function movePropToNewChildElement(
+  file,
+  { packageName, elementName, propName, newChildName, newChildPackageName }
+) {
+  if (!packageName || !elementName || !propName || !newChildName) {
+    warnLog("movePropToNewChildElement: 'packageName', 'elementName', 'propName', and 'newChildName' are required");
+    return false;
+  }
+
+  const allDeclarations = file.getImportDeclarations();
+  let newChildAdded = false;
+
+  for (const declaration of allDeclarations) {
+    const moduleSpecifier = declaration.getModuleSpecifierValue();
+
+    if (moduleSpecifier !== packageName) {
+      continue;
+    }
+
+    for (const namedImport of declaration.getNamedImports()) {
+      // Use getName() to handle aliased imports correctly
+      if (namedImport.getName() !== elementName) {
+        continue;
+      }
+
+      verboseOnlyLog(
+        "Found component named",
+        elementName,
+        "from declaration",
+        packageName
+      );
+
+      // Get the actual name used in JSX (could be alias)
+      const aliasNode = namedImport.getAliasNode();
+      const actualElementName = aliasNode ? aliasNode.getText() : elementName;
+
+      // Temporarily rename component name with "Renamed" suffix to avoid conflicts
+      const tempEleName = actualElementName + "Renamed";
+      namedImport.renameAlias(tempEleName);
+
+      // Collect all elements to transform first (to avoid node invalidation during iteration)
+      // Process from bottom to top so earlier positions remain valid
+      let elementsToTransform = [];
+
+      const collectElements = () => {
+        elementsToTransform = [];
+        for (const descendant of file.getDescendantsOfKind(
+          SyntaxKind.JsxOpeningElement
+        )) {
+          if (descendant.getTagNameNode().getText() !== tempEleName) {
+            continue;
+          }
+
+          for (const attribute of descendant.getAttributes()) {
+            const firstDescendant = attribute.getFirstDescendant();
+            if (!firstDescendant || firstDescendant.getText() !== propName) {
+              continue;
+            }
+
+            const element = descendant.getFirstAncestorByKind(
+              SyntaxKind.JsxElement
+            );
+
+            if (element) {
+              elementsToTransform.push({
+                element,
+                startPos: element.getStart()
+              });
+            }
+            break;
+          }
+        }
+        // Sort by position descending (process bottom elements first)
+        elementsToTransform.sort((a, b) => b.startPos - a.startPos);
+      };
+
+      collectElements();
+
+      // Process each element
+      for (const { element } of elementsToTransform) {
+        // Re-verify the element is still valid and has the prop
+        try {
+          const openingElement = element.getOpeningElement();
+          if (!openingElement || openingElement.getTagNameNode().getText() !== tempEleName) {
+            continue;
+          }
+
+          const hasProp = openingElement.getAttributes().some(attr => {
+            const fd = attr.getFirstDescendant();
+            return fd && fd.getText() === propName;
+          });
+
+          if (!hasProp) {
+            continue;
+          }
+        } catch {
+          // Element was invalidated, skip
+          continue;
+        }
+
+        verboseOnlyLog(
+          "Found prop named",
+          propName,
+          "on element",
+          elementName,
+          "with temporary name",
+          tempEleName
+        );
+
+        element.transform((traversal) => {
+          const currentNode = traversal.currentNode;
+          if (!ts.isJsxElement(currentNode)) {
+            return currentNode;
+          }
+
+          const attributesProperties =
+            currentNode.openingElement.attributes.properties;
+
+          for (const property of attributesProperties) {
+            if (!ts.isJsxAttribute(property)) {
+              continue;
+            }
+
+            if (property.name.escapedText !== propName) {
+              continue;
+            }
+
+            if (!property.initializer) {
+              continue;
+            }
+
+            // Create the new child element
+            const newChildElement =
+              traversal.factory.createJsxElement(
+                traversal.factory.createJsxOpeningElement(
+                  traversal.factory.createIdentifier(newChildName),
+                  undefined,
+                  traversal.factory.createJsxAttributes([])
+                ),
+                ts.isStringLiteral(property.initializer)
+                  ? [
+                      traversal.factory.createJsxText(
+                        property.initializer.text
+                      ),
+                    ]
+                  : // JsxExpression - move directly as child
+                    [property.initializer],
+                traversal.factory.createJsxClosingElement(
+                  traversal.factory.createIdentifier(newChildName)
+                )
+              );
+
+            const prevChildren = traversal.visitChildren().children;
+
+            // Create new element without the prop
+            const newCurrent = traversal.factory.createJsxElement(
+              traversal.factory.createJsxOpeningElement(
+                currentNode.openingElement.tagName,
+                currentNode.openingElement.typeArguments,
+                traversal.factory.createJsxAttributes(
+                  attributesProperties.filter(
+                    (p) => !ts.isJsxAttribute(p) || p.name.escapedText !== propName
+                  )
+                )
+              ),
+              [
+                // Preserve existing indentation
+                ...(prevChildren.length &&
+                ts.isJsxText(prevChildren[0]) &&
+                prevChildren[0].containsOnlyTriviaWhiteSpaces
+                  ? [prevChildren[0]]
+                  : []),
+                newChildElement,
+                ...traversal.visitChildren().children,
+              ],
+              currentNode.closingElement
+            );
+
+            newChildAdded = true;
+            return newCurrent;
+          }
+
+          return currentNode;
+        });
+      }
+
+      // Rename back to original element name
+      namedImport.renameAlias(actualElementName);
+      namedImport.removeAlias();
+    }
+  }
+
+  // Add import for the new child component if needed
+  if (newChildAdded && newChildPackageName) {
+    // Re-fetch declarations since the AST may have changed
+    const currentDeclarations = file.getImportDeclarations();
+    const existingDecl = currentDeclarations.find(
+      (d) => d.getModuleSpecifierValue() === newChildPackageName
+    );
+
+    if (existingDecl) {
+      const hasImport = existingDecl
+        .getNamedImports()
+        .some((n) => n.getName() === newChildName);
+
+      if (!hasImport) {
+        verboseOnlyLog("Added named import", newChildName, "to declaration", newChildPackageName);
+        existingDecl.addNamedImport(newChildName);
+      }
+    } else {
+      verboseOnlyLog("Created new import declaration for", newChildPackageName, "with", newChildName);
+      file.addImportDeclarations([
+        {
+          namedImports: [newChildName],
+          moduleSpecifier: newChildPackageName,
+        },
+      ]);
+    }
+  }
+
+  return newChildAdded;
 }

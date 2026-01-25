@@ -22,6 +22,47 @@ Invalid CSS variables are extracted from `@salt-ds/theme/index.css`, which path 
 
 There is `--mode` option available if you just want to run React or CSS part of the codemod.
 
+## Experimental Features
+
+### FormField Migration (`--migrateFormControls`)
+
+This experimental feature migrates `FormField` components from `@salt-ds/lab` to `@salt-ds/core`. It transforms the `label` and `helperText` props into child elements.
+
+```bash
+npx salt-codemod --migrateFormControls
+```
+
+**Before:**
+```jsx
+import { FormField } from "@salt-ds/lab";
+
+<FormField label="Username" helperText="Enter your username">
+  <Input />
+</FormField>
+```
+
+**After:**
+```jsx
+import { FormField, FormFieldLabel, FormFieldHelperText } from "@salt-ds/core";
+
+<FormField>
+  <FormFieldLabel>Username</FormFieldLabel>
+  <Input />
+  <FormFieldHelperText>Enter your username</FormFieldHelperText>
+</FormField>
+```
+
+The migration handles:
+- String literal props (`label="Name"`)
+- JSX expression props (`label={variable}`, `label={getLabel()}`)
+- Template literals (`label={\`Hello ${name}\`}`)
+- Conditional expressions (`label={isRequired ? "Required" : "Optional"}`)
+- Aliased imports (`import { FormField as FF }`)
+- Multiple FormField instances in the same file
+- Nested FormField components
+
+**Note:** This feature is off by default. Enable it with `--migrateFormControls`.
+
 ## Supported Versions
 
 This codemod currently supports @salt-ds/core versions **1.0.0 through 1.54.2**.
@@ -149,6 +190,24 @@ replaceReactAttribute(file, {
   attributeTo: "sentiment",
   valueTo: `"accented"`,
 });
+```
+
+### Moving Props to Child Elements
+```javascript
+movePropToNewChildElement(file, {
+  packageName: "@salt-ds/lab",
+  elementName: "FormField",
+  propName: "label",
+  newChildName: "FormFieldLabel",
+  newChildPackageName: "@salt-ds/core",
+});
+```
+
+This transforms `<FormField label="Name">` into:
+```jsx
+<FormField>
+  <FormFieldLabel>Name</FormFieldLabel>
+</FormField>
 ```
 
 ### CSS Variable Renames

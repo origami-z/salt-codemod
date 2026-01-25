@@ -77,6 +77,7 @@ import { css1490RenameMap } from "./migration/core1490.js";
 import { css1500RenameMap } from "./migration/core1500.js";
 import { css1520RenameMap } from "./migration/core1520.js";
 import { react1530 } from "./migration/core1530.js";
+import { formControls } from "./migration/formControls.js";
 
 verboseOnlyLog("Args used:");
 verboseOnlyTableLog(parsedArgs);
@@ -95,6 +96,7 @@ const {
   themeCss,
   themeNextCss,
   cssModeGlob: cssGlob,
+  migrateFormControls,
 } = parsedArgs;
 
 const v100 = parse("1.0.0");
@@ -409,6 +411,11 @@ if (mode === undefined || mode === "ts") {
 
     if (gt(v1530, fromVersion) && lte(v1530, toVersion)) {
       react1530(file);
+    }
+
+    // Experimental: FormField migration from @salt-ds/lab to @salt-ds/core
+    if (migrateFormControls) {
+      formControls(file);
     }
 
     if (organizeImports) {
