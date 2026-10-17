@@ -40,6 +40,21 @@ import { react1460 } from "../migration/core1460";
 import { react1471 } from "../migration/core1471";
 import { react1480 } from "../migration/core1480";
 import { react1530 } from "../migration/core1530";
+import { react1560 } from "../migration/core1560";
+import { react1580 } from "../migration/core1580";
+import { react1610 } from "../migration/core1610";
+import { react1620 } from "../migration/core1620";
+import { react1630 } from "../migration/core1630";
+import { react1640 } from "../migration/core1640";
+import { react1641 } from "../migration/core1641";
+import { react1650 } from "../migration/core1650";
+import { react1660 } from "../migration/core1660";
+import { react1690 } from "../migration/core1690";
+import { react1710 } from "../migration/core1710";
+import { react1730 } from "../migration/core1730";
+import { css1720RenameMap } from "../migration/core1720";
+import { css1730RenameMap } from "../migration/core1730";
+import { getCssRenameCheckRegex, migrateCssVar } from "../migration/utils";
 
 /**
  *
@@ -367,5 +382,133 @@ describe("Smoke test all migration script will run", () => {
     const actualResultText = file.getText();
 
     expect(actualResultText.includes(`from "@salt-ds/core"`)).toBeTruthy();
+  });
+  test("react1560", () => {
+    const file = createFileWithContent(`import { Table, TR, TD } from "@salt-ds/lab";
+  export const App = () => <Table><tbody><TR><TD /></TR></tbody></Table>;`);
+    react1560(file);
+    expect(file.getText()).toContain(`import { Table, TR, TD } from "@salt-ds/core";`);
+  });
+  test("react1580", () => {
+    const file = createFileWithContent(`import { Kbd } from "@salt-ds/lab";
+  export const App = () => <Kbd>cmd</Kbd>;`);
+    react1580(file);
+    expect(file.getText()).toContain(`import { Kbd } from "@salt-ds/core";`);
+  });
+  test("react1610", () => {
+    const file = createFileWithContent(`import { Rating, TabsNext, TabNext, TabNextTrigger, TabListNext, TabBar } from "@salt-ds/lab";
+  export const App = () => (
+    <>
+      <Rating />
+      <TabsNext>
+        <TabBar>
+          <TabListNext>
+            <TabNext value="a"><TabNextTrigger>A</TabNextTrigger></TabNext>
+          </TabListNext>
+        </TabBar>
+      </TabsNext>
+    </>
+  );`);
+    react1610(file);
+    const text = file.getText();
+    expect(text).not.toContain("@salt-ds/lab");
+    expect(text).not.toContain("Next");
+    expect(text).toContain("<Tabs>");
+    expect(text).toContain("<TabTrigger>A</TabTrigger>");
+    expect(text).toContain(`from "@salt-ds/core"`);
+  });
+  test("react1610 skips rename clashing with legacy lab Tabs", () => {
+    const file = createFileWithContent(`import { Tabs, TabsNext } from "@salt-ds/lab";
+  export const App = () => <><Tabs /><TabsNext /></>;`);
+    react1610(file);
+    expect(file.getText()).toContain(`import { Tabs, TabsNext } from "@salt-ds/lab";`);
+  });
+  test("react1620", () => {
+    const file = createFileWithContent(`import { SidePanel, useSidePanel } from "@salt-ds/lab";
+  export const App = () => <SidePanel />;`);
+    react1620(file);
+    expect(file.getText()).toContain(`import { SidePanel, useSidePanel } from "@salt-ds/core";`);
+  });
+  test("react1630", () => {
+    const file = createFileWithContent(`import { Tree, TreeNode } from "@salt-ds/lab";
+  export const App = () => <Tree><TreeNode value="a" /></Tree>;`);
+    react1630(file);
+    expect(file.getText()).toContain(`import { Tree, TreeNode } from "@salt-ds/core";`);
+  });
+  test("react1640", () => {
+    const file = createFileWithContent(`import { DatePicker, MegaMenuSection, MegaMenuContent, Tabstrip } from "@salt-ds/lab";
+  export const App = () => (
+    <>
+      <DatePicker selectionVariant="single" />
+      <MegaMenuSection />
+      <MegaMenuContent />
+      <Tabstrip />
+    </>
+  );`);
+    react1640(file);
+    const text = file.getText();
+    expect(text).toContain(`import { DatePicker } from "@salt-ds/date-components";`);
+    expect(text).toContain(`import { MegaMenuGroups, MegaMenuSupportingContent, Tabstrip } from "@salt-ds/lab";`);
+    expect(text).toContain("<MegaMenuGroups />");
+    expect(text).toContain("<MegaMenuSupportingContent />");
+  });
+  test("react1641", () => {
+    const file = createFileWithContent(`import { MegaMenuHeader, MegaMenuItem, MegaMenuSupportingContent, MegaMenuSupportingActions } from "@salt-ds/lab";
+  export const App = () => (
+    <>
+      <MegaMenuHeader />
+      <MegaMenuItem />
+      <MegaMenuSupportingContent />
+      <MegaMenuSupportingActions />
+    </>
+  );`);
+    react1641(file);
+    expect(file.getText()).toContain(
+      `import { MegaMenuGroupHeading, MegaMenuListItem, MegaMenuAside, MegaMenuActions } from "@salt-ds/lab";`
+    );
+  });
+  test("react1650", () => {
+    const file = createFileWithContent(`import { ToolbarNext, TooltrayNext } from "@salt-ds/lab";
+  export const App = () => <ToolbarNext><TooltrayNext /></ToolbarNext>;`);
+    react1650(file);
+    const text = file.getText();
+    expect(text).toContain(`import { Toolbar, Tooltray } from "@salt-ds/core";`);
+    expect(text).toContain("<Toolbar><Tooltray /></Toolbar>");
+  });
+  test("react1660", () => {
+    const file = createFileWithContent(`import { MegaMenu, MegaMenuTrigger, MegaMenuPanel } from "@salt-ds/lab";
+  export const App = () => <MegaMenu><MegaMenuTrigger /><MegaMenuPanel /></MegaMenu>;`);
+    react1660(file);
+    expect(file.getText()).toContain(`import { MegaMenu, MegaMenuTrigger, MegaMenuPanel } from "@salt-ds/core";`);
+  });
+  test("react1690", () => {
+    const file = createFileWithContent(`import { BreadcrumbsNext, BreadcrumbNext } from "@salt-ds/lab";
+  export const App = () => <BreadcrumbsNext><BreadcrumbNext href="/" /></BreadcrumbsNext>;`);
+    react1690(file);
+    const text = file.getText();
+    expect(text).toContain(`import { Breadcrumbs, Breadcrumb } from "@salt-ds/core";`);
+    expect(text).toContain(`<Breadcrumbs><Breadcrumb href="/" /></Breadcrumbs>`);
+  });
+  test("react1710", () => {
+    const file = createFileWithContent(`import { LinkButton } from "@salt-ds/lab";
+  export const App = () => <LinkButton href="/" />;`);
+    react1710(file);
+    expect(file.getText()).toContain(`import { LinkButton } from "@salt-ds/core";`);
+  });
+  test("react1730", () => {
+    const file = createFileWithContent(`import { OnSolidButton } from "@salt-ds/lab";
+  export const App = () => <OnSolidButton />;`);
+    react1730(file);
+    expect(file.getText()).toContain(`import { OnSolidButton } from "@salt-ds/core";`);
+  });
+  test("css1720 and css1730 chain to latest font weight token", () => {
+    const map = new Map([...css1720RenameMap, ...css1730RenameMap]);
+    const regex = getCssRenameCheckRegex(map);
+    expect(
+      migrateCssVar("font-weight: var(--salt-text-h1-fontWeight-strong);", regex, map)
+    ).toBe("font-weight: var(--salt-text-heading-fontWeight-bolder);");
+    expect(
+      migrateCssVar("font-family: var(--salt-text-h2-fontFamily);", regex, map)
+    ).toBe("font-family: var(--salt-text-heading-fontFamily);");
   });
 });

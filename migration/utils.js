@@ -176,6 +176,31 @@ export function moveNamedImports(file, { namedImportText, from, to, newName }) {
     return false;
   }
 
+  // Avoid clashing with an identifier already imported under the new name,
+  // e.g. legacy lab `Tabs` next to `TabsNext` which is renamed to `Tabs`
+  if (newName && newName !== namedImportText) {
+    const clashingImport = allDeclarations
+      .flatMap((declaration) => declaration.getNamedImports())
+      .find(
+        (namedImport) =>
+          (namedImport.getAliasNode()?.getText() ?? namedImport.getName()) ===
+          newName
+      );
+    const hasImportToMove = sourceDeclaration
+      .getNamedImports()
+      .some((namedImport) => namedImport.getText() === namedImportText);
+    if (clashingImport && hasImportToMove) {
+      warnLog(
+        `Skipped moving ${namedImportText} from ${from} to ${newName} in ${to}, because \`${newName}\` is already imported at`,
+        `${relative(
+          process.cwd(),
+          file.getFilePath()
+        )}:${clashingImport.getStartLineNumber()}. Please migrate manually.`
+      );
+      return false;
+    }
+  }
+
   let importFound = false;
   for (const namedImport of sourceDeclaration.getNamedImports()) {
     if (namedImport.getText() === namedImportText) {

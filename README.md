@@ -65,7 +65,7 @@ The migration handles:
 
 ## Supported Versions
 
-This codemod currently supports @salt-ds/core versions **1.0.0 through 1.54.2**.
+This codemod currently supports @salt-ds/core versions **1.0.0 through 1.73.0**.
 
 ## Adding Support for New Versions
 

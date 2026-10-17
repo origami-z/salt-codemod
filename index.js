@@ -77,6 +77,21 @@ import { css1490RenameMap } from "./migration/core1490.js";
 import { css1500RenameMap } from "./migration/core1500.js";
 import { css1520RenameMap } from "./migration/core1520.js";
 import { react1530 } from "./migration/core1530.js";
+import { css1542RenameMap } from "./migration/core1542.js";
+import { react1560 } from "./migration/core1560.js";
+import { css1580RenameMap, react1580 } from "./migration/core1580.js";
+import { css1590RenameMap } from "./migration/core1590.js";
+import { react1610 } from "./migration/core1610.js";
+import { react1620 } from "./migration/core1620.js";
+import { react1630 } from "./migration/core1630.js";
+import { css1640RenameMap, react1640 } from "./migration/core1640.js";
+import { react1641 } from "./migration/core1641.js";
+import { react1650 } from "./migration/core1650.js";
+import { react1660 } from "./migration/core1660.js";
+import { css1690RenameMap, react1690 } from "./migration/core1690.js";
+import { react1710 } from "./migration/core1710.js";
+import { css1720RenameMap } from "./migration/core1720.js";
+import { css1730RenameMap, react1730 } from "./migration/core1730.js";
 import { formControls } from "./migration/formControls.js";
 
 verboseOnlyLog("Args used:");
@@ -159,7 +174,28 @@ const v1500 = parse("1.50.0");
 const v1520 = parse("1.52.0");
 // nothing needed for 1.52.1
 const v1530 = parse("1.53.0");
-// nothing needed for 1.54.0, 1.54.1, 1.54.2
+// nothing needed for 1.54.0, 1.54.1
+const v1542 = parse("1.54.2");
+// nothing needed for 1.55.0
+const v1560 = parse("1.56.0");
+// nothing needed for 1.57.0, 1.57.1
+const v1580 = parse("1.58.0");
+const v1590 = parse("1.59.0");
+// nothing needed for 1.59.1, 1.60.0
+const v1610 = parse("1.61.0");
+const v1620 = parse("1.62.0");
+const v1630 = parse("1.63.0");
+const v1640 = parse("1.64.0");
+const v1641 = parse("1.64.1");
+const v1650 = parse("1.65.0");
+// nothing needed for 1.65.1
+const v1660 = parse("1.66.0");
+// nothing needed for 1.67.0, 1.67.1, 1.68.0
+const v1690 = parse("1.69.0");
+// nothing needed for 1.70.0
+const v1710 = parse("1.71.0");
+const v1720 = parse("1.72.0");
+const v1730 = parse("1.73.0");
 // NOTE: don't forget to modify `LATEST_SUPPORTED_VERSION` in args.js
 
 if (dryRun) {
@@ -413,6 +449,54 @@ if (mode === undefined || mode === "ts") {
       react1530(file);
     }
 
+    if (gt(v1560, fromVersion) && lte(v1560, toVersion)) {
+      react1560(file);
+    }
+
+    if (gt(v1580, fromVersion) && lte(v1580, toVersion)) {
+      react1580(file);
+    }
+
+    if (gt(v1610, fromVersion) && lte(v1610, toVersion)) {
+      react1610(file);
+    }
+
+    if (gt(v1620, fromVersion) && lte(v1620, toVersion)) {
+      react1620(file);
+    }
+
+    if (gt(v1630, fromVersion) && lte(v1630, toVersion)) {
+      react1630(file);
+    }
+
+    if (gt(v1640, fromVersion) && lte(v1640, toVersion)) {
+      react1640(file);
+    }
+
+    if (gt(v1641, fromVersion) && lte(v1641, toVersion)) {
+      react1641(file);
+    }
+
+    if (gt(v1650, fromVersion) && lte(v1650, toVersion)) {
+      react1650(file);
+    }
+
+    if (gt(v1660, fromVersion) && lte(v1660, toVersion)) {
+      react1660(file);
+    }
+
+    if (gt(v1690, fromVersion) && lte(v1690, toVersion)) {
+      react1690(file);
+    }
+
+    if (gt(v1710, fromVersion) && lte(v1710, toVersion)) {
+      react1710(file);
+    }
+
+    if (gt(v1730, fromVersion) && lte(v1730, toVersion)) {
+      react1730(file);
+    }
+
     // Experimental: FormField migration from @salt-ds/lab to @salt-ds/core
     if (migrateFormControls) {
       formControls(file);
@@ -596,6 +680,34 @@ if (mode === undefined || mode === "css") {
 
   if (gt(v1520, fromVersion) && lte(v1520, toVersion)) {
     cssMigrationMapArray.push(...css1520RenameMap);
+  }
+
+  if (gt(v1542, fromVersion) && lte(v1542, toVersion)) {
+    cssMigrationMapArray.push(...css1542RenameMap);
+  }
+
+  if (gt(v1580, fromVersion) && lte(v1580, toVersion)) {
+    cssMigrationMapArray.push(...css1580RenameMap);
+  }
+
+  if (gt(v1590, fromVersion) && lte(v1590, toVersion)) {
+    cssMigrationMapArray.push(...css1590RenameMap);
+  }
+
+  if (gt(v1640, fromVersion) && lte(v1640, toVersion)) {
+    cssMigrationMapArray.push(...css1640RenameMap);
+  }
+
+  if (gt(v1690, fromVersion) && lte(v1690, toVersion)) {
+    cssMigrationMapArray.push(...css1690RenameMap);
+  }
+
+  if (gt(v1720, fromVersion) && lte(v1720, toVersion)) {
+    cssMigrationMapArray.push(...css1720RenameMap);
+  }
+
+  if (gt(v1730, fromVersion) && lte(v1730, toVersion)) {
+    cssMigrationMapArray.push(...css1730RenameMap);
   }
 
   const cssMigrationMap = new Map(cssMigrationMapArray);
